@@ -1,0 +1,478 @@
+{% extends 'base.html' %}
+{% block title %}VAT Report — Finance{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ── Month Calendar ── */
+    .month-calendar-card {
+        border-radius: 14px; border: none;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .year-label {
+        font-size: 1.1rem; font-weight: 700; color: #1a2035; letter-spacing: 0.5px;
+    }
+    .month-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin-top: 1rem;
+    }
+    .month-btn {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 0.75rem 0.5rem;
+        text-align: center;
+        cursor: pointer;
+        background: #fafafa;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #495057;
+        transition: all 0.18s;
+        position: relative;
+        user-select: none;
+    }
+    .month-btn:hover:not(.disabled):not(.selected) {
+        border-color: #4fc3f7;
+        background: #f0faff;
+        color: #0288d1;
+        transform: translateY(-1px);
+    }
+    .month-btn.selected {
+        border-color: #1a2e52;
+        background: linear-gradient(135deg, #1a2e52, #1e3a6e);
+        color: #fff;
+        box-shadow: 0 4px 14px rgba(26,46,82,0.35);
+        transform: translateY(-1px);
+    }
+    .month-btn.current-month:not(.selected) {
+        border-color: #4fc3f7;
+        color: #0288d1;
+        background: rgba(79,195,247,0.07);
+    }
+    .month-btn.current-month:not(.selected)::after {
+        content: '';
+        display: block;
+        width: 5px; height: 5px;
+        border-radius: 50%;
+        background: #4fc3f7;
+        margin: 4px auto 0;
+    }
+    .month-btn.disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+        background: #f0f0f0;
+    }
+    .month-btn .month-short { display: block; font-size: 0.85rem; font-weight: 700; }
+    .month-btn .month-num  { display: block; font-size: 0.7rem; opacity: 0.6; margin-top: 2px; }
+
+    /* ── Report Table ── */
+    .report-table th {
+        font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.5px; color: #495057; background: #f8f9fa; white-space: nowrap;
+    }
+    .report-table td { font-size: 0.875rem; vertical-align: middle; }
+    .report-table tfoot td {
+        font-weight: 700; font-size: 0.875rem;
+        background: #f0f4ff; border-top: 2px solid #dee2e6;
+    }
+    .amount-col { text-align: right; font-variant-numeric: tabular-nums; }
+    .empty-state { padding: 4rem 2rem; text-align: center; color: #adb5bd; }
+    .empty-state i { font-size: 3.5rem; display: block; margin-bottom: 0.75rem; }
+
+    /* ── Pagination ── */
+    .pagination-bar {
+        padding: 0.75rem 1rem; border-top: 1px solid #e9ecef; background: #fafafa;
+        border-radius: 0 0 14px 14px; display: flex; align-items: center;
+        justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;
+    }
+    .pagination-info { font-size: 0.8rem; color: #6c757d; }
+    .page-nums { display: flex; gap: 4px; flex-wrap: wrap; }
+    .page-btn {
+        border: 1px solid #dee2e6; background: #fff; color: #495057;
+        border-radius: 6px; padding: 0.3rem 0.65rem; font-size: 0.8rem;
+        cursor: pointer; transition: all 0.15s; line-height: 1.4;
+    }
+    .page-btn:hover:not(.active):not(:disabled) { background: #f0f4ff; border-color: #4361ee; color: #4361ee; }
+    .page-btn.active { background: #1a2e52; border-color: #1a2e52; color: #fff; font-weight: 600; }
+    .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    @media print { .pagination-bar { display: none !important; } }
+
+    /* ── Print ── */
+    @media print {
+        .no-print { display: none !important; }
+        .sidebar, .topbar { display: none !important; }
+        .main-content { margin-left: 0 !important; }
+        .content-area { padding: 0 !important; }
+        .print-header { display: block !important; }
+        body { background: #fff !important; }
+        .card { box-shadow: none !important; border: 1px solid #dee2e6 !important; }
+    }
+    .print-header { display: none; margin-bottom: 1.5rem; }
+    .print-header h5 { font-size: 1.1rem; font-weight: 700; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="no-print mb-3">
+    <ol class="breadcrumb small">
+        <li class="breadcrumb-item">
+            <a href="{% url 'finance_reports' %}" class="text-decoration-none">Report Center</a>
+        </li>
+        <li class="breadcrumb-item active">VAT Report</li>
+    </ol>
+</nav>
+
+<!-- Page Header -->
+<div class="page-header d-flex align-items-center justify-content-between no-print">
+    <div>
+        <h4 class="mb-0"><i class="bi bi-percent me-2 text-primary"></i>VAT Report</h4>
+        <small class="text-muted">Monthly VAT summary — {{ current_year }}</small>
+    </div>
+    {% if generated and rows %}
+    <div class="d-flex gap-2">
+        <button class="btn btn-success btn-sm" onclick="exportExcel()">
+            <i class="bi bi-file-earmark-excel me-1"></i> Download Excel
+        </button>
+        <button class="btn btn-danger btn-sm" onclick="window.print()">
+            <i class="bi bi-file-earmark-pdf me-1"></i> Download PDF
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Filter Panel -->
+<div class="card month-calendar-card p-4 mb-4 no-print">
+
+    <!-- Mode tabs -->
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <ul class="nav nav-pills nav-sm" id="filterModeTabs" style="gap:4px;">
+            <li class="nav-item">
+                <button class="nav-link py-1 px-3 {% if filter_mode != 'range' %}active{% endif %}"
+                        id="tab-month" onclick="switchMode('month')" type="button">
+                    <i class="bi bi-calendar3 me-1"></i> Monthly
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link py-1 px-3 {% if filter_mode == 'range' %}active{% endif %}"
+                        id="tab-range" onclick="switchMode('range')" type="button">
+                    <i class="bi bi-calendar-range me-1"></i> Date Range
+                </button>
+            </li>
+        </ul>
+        {% if generated %}
+        <a href="{% url 'report_vat' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-x-circle me-1"></i> Clear
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Monthly mode -->
+    <div id="panel-month" {% if filter_mode == 'range' %}style="display:none;"{% endif %}>
+        <div class="mb-2">
+            <div class="year-label"><i class="bi bi-calendar3 me-2 text-primary"></i>{{ current_year }}</div>
+            <small class="text-muted">Click a month to generate the VAT report</small>
+        </div>
+        <form method="post" id="monthForm">
+            {% csrf_token %}
+            <input type="hidden" name="filter_mode" value="month">
+            <input type="hidden" name="month" id="selectedMonth" value="{{ filters.month }}">
+            <div class="month-grid">
+                {% for m in months %}
+                <div class="month-btn {% if m.is_current %}current-month{% endif %} {% if m.is_future %}disabled{% endif %} {% if m.is_selected %}selected{% endif %}"
+                    data-month="{{ m.value }}"
+                    onclick="selectMonth(this, {{ m.num }})">
+                    <span class="month-short">{{ m.short }}</span>
+                    <span class="month-num">{{ current_year }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Date Range mode -->
+    <div id="panel-range" {% if filter_mode != 'range' %}style="display:none;"{% endif %}>
+        <form method="post" id="rangeForm">
+            {% csrf_token %}
+            <input type="hidden" name="filter_mode" value="range">
+            <div class="row g-3 align-items-end mt-1">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold small text-uppercase text-muted">Date From</label>
+                    <input type="date" name="date_from" class="form-control form-control-sm"
+                           value="{{ filters.date_from }}" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold small text-uppercase text-muted">Date To</label>
+                    <input type="date" name="date_to" class="form-control form-control-sm"
+                           value="{{ filters.date_to }}" required>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary btn-sm w-100">
+                        <i class="bi bi-funnel me-1"></i> Generate
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    {% if generated %}
+    <div class="mt-3 pt-3 border-top d-flex align-items-center gap-2">
+        <i class="bi bi-check-circle-fill text-primary"></i>
+        {% if filter_mode == 'range' %}
+        <span class="fw-semibold text-primary">Date Range</span>
+        {% else %}
+        <span class="fw-semibold text-primary">{{ filters.month_label }}</span>
+        {% endif %}
+        <span class="text-muted small">({{ filters.date_from }} to {{ filters.date_to }})</span>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Print Header -->
+<div class="print-header">
+    <h5><i class="bi bi-percent me-1"></i> VAT Report
+        {% if filter_mode == 'range' %} — Date Range{% else %} — {{ filters.month_label }}{% endif %}
+    </h5>
+    <small>Period: {{ filters.date_from }} to {{ filters.date_to }}</small>
+    <hr>
+</div>
+
+<!-- Results -->
+{% if generated %}
+<div class="card" style="border-radius:14px; border:none; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+    <div class="card-header bg-white border-0 pt-3 pb-0 d-flex align-items-center justify-content-between no-print">
+        <h6 class="fw-bold mb-0">
+            {% if filter_mode == 'range' %}{{ filters.date_from }} – {{ filters.date_to }}{% else %}{{ filters.month_label }}{% endif %} — VAT Summary
+            {% if rows %}
+            <span class="badge bg-primary ms-2">{{ rows|length }} record{{ rows|length|pluralize }}</span>
+            {% endif %}
+        </h6>
+        {% if rows %}
+        <div class="d-flex gap-2">
+            <button class="btn btn-success btn-sm" onclick="exportExcel()">
+                <i class="bi bi-file-earmark-excel me-1"></i> Excel
+            </button>
+            <button class="btn btn-danger btn-sm" onclick="window.print()">
+                <i class="bi bi-printer me-1"></i> PDF / Print
+            </button>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if rows %}
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 report-table" id="reportTable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Doc No</th>
+                    <th>Doc Type</th>
+                    <th>Inv No</th>
+                    <th>Doc Date</th>
+                    <th>Posting Date</th>
+                    <th>Vendor/Cust No</th>
+                    <th>Name</th>
+                    <th>VAT No</th>
+                    <th>Type of Goods/Services</th>
+                    <th>Tax Code</th>
+                    <th class="amount-col">Tax Base Amt</th>
+                    <th class="amount-col">Output/Input Tax</th>
+                    <th class="amount-col">Gross Incl. VAT</th>
+                    <th>Currency</th>
+                    <th class="amount-col">Foreign Amt</th>
+                    <th>Foreign Currency</th>
+                    <th>Posting Month</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    <td class="text-muted small">{{ forloop.counter }}</td>
+                    <td class="fw-semibold">{{ row.doc_no|default:"—" }}</td>
+                    <td>{{ row.doc_type|default:"—" }}</td>
+                    <td>{{ row.inv_no|default:"—" }}</td>
+                    <td>{{ row.doc_date|date:"d/m/Y"|default:"—" }}</td>
+                    <td>{{ row.posting_date|date:"d/m/Y"|default:"—" }}</td>
+                    <td><code class="small">{{ row.vendor_cust_no|default:"—" }}</code></td>
+                    <td>{{ row.vend_cust_name|default:"—" }}</td>
+                    <td class="small">{{ row.vend_cust_vat_no|default:"—" }}</td>
+                    <td class="small">{{ row.types_of_gooods_services|default:"—" }}</td>
+                    <td>{{ row.tax_code|default:"—" }}</td>
+                    <td class="amount-col">{{ row.tax_base_amount|default:"0.00" }}</td>
+                    <td class="amount-col text-success fw-semibold">{{ row.output_input_tax|default:"0.00" }}</td>
+                    <td class="amount-col fw-bold">{{ row.grsos_amt_incl_vat|default:"0.00" }}</td>
+                    <td class="text-muted small">{{ row.local_currency|default:"—" }}</td>
+                    <td class="amount-col">{{ row.foreign_currency_amt|default:"0.00" }}</td>
+                    <td class="text-muted small">{{ row.foreign_currency|default:"—" }}</td>
+                    <td class="text-muted small">{{ row.posting_month|default:"—" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="11" class="text-end pe-3">Totals</td>
+                    <td class="amount-col" id="totalTaxBase">—</td>
+                    <td class="amount-col text-warning" id="totalOutputInput">—</td>
+                    <td class="amount-col" id="totalGross">—</td>
+                    <td></td>
+                    <td class="amount-col" id="totalForeign">—</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <!-- Pagination bar -->
+    <div class="pagination-bar no-print" id="paginationBar">
+        <div class="pagination-info" id="pageInfo"></div>
+        <div class="page-nums" id="pageNums"></div>
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+        <i class="bi bi-inbox"></i>
+        No VAT records found for the selected period.
+    </div>
+    {% endif %}
+</div>
+
+{% else %}
+<div class="empty-state" style="padding:5rem 2rem; text-align:center; color:#adb5bd;">
+    <i class="bi bi-calendar-month" style="font-size:3.5rem; display:block; margin-bottom:0.75rem; opacity:0.4;"></i>
+    <p class="mb-0">Select a month from the calendar above to generate the VAT report.</p>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+const CURRENT_MONTH = {{ current_month }};
+const PAGE_SIZE = 25;
+let currentPage = 1;
+let allRows = [];
+
+function switchMode(mode) {
+    const panelMonth = document.getElementById('panel-month');
+    const panelRange = document.getElementById('panel-range');
+    const tabMonth   = document.getElementById('tab-month');
+    const tabRange   = document.getElementById('tab-range');
+    if (mode === 'range') {
+        panelMonth.style.display = 'none';
+        panelRange.style.display = '';
+        tabMonth.classList.remove('active');
+        tabRange.classList.add('active');
+    } else {
+        panelRange.style.display = 'none';
+        panelMonth.style.display = '';
+        tabRange.classList.remove('active');
+        tabMonth.classList.add('active');
+    }
+}
+
+function selectMonth(el, monthNum) {
+    if (el.classList.contains('disabled')) return;
+    document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('selectedMonth').value = el.dataset.month;
+    document.getElementById('monthForm').submit();
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const saved = document.getElementById('selectedMonth') && document.getElementById('selectedMonth').value;
+    if (saved) {
+        document.querySelectorAll('.month-btn').forEach(function (btn) {
+            if (btn.dataset.month === saved) btn.classList.add('selected');
+        });
+    }
+
+    const tbody = document.querySelector('#reportTable tbody');
+    if (!tbody) return;
+
+    allRows = Array.from(tbody.querySelectorAll('tr'));
+
+    /* Grand totals from all rows */
+    let taxBase = 0, outputInput = 0, gross = 0, foreign = 0;
+    allRows.forEach(function (r) {
+        const c = r.querySelectorAll('td');
+        const p = i => parseFloat((c[i]?.textContent || '0').replace(/,/g, '')) || 0;
+        taxBase     += p(11);
+        outputInput += p(12);
+        gross       += p(13);
+        foreign     += p(15);
+    });
+    const fmt = n => n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+    const el = id => document.getElementById(id);
+    if (el('totalTaxBase'))     el('totalTaxBase').textContent     = fmt(taxBase);
+    if (el('totalOutputInput')) el('totalOutputInput').textContent = fmt(outputInput);
+    if (el('totalGross'))       el('totalGross').textContent       = fmt(gross);
+    if (el('totalForeign'))     el('totalForeign').textContent     = fmt(foreign);
+
+    renderPage(1);
+});
+
+function renderPage(page) {
+    currentPage = page;
+    const total      = allRows.length;
+    const totalPages = Math.ceil(total / PAGE_SIZE);
+    const start      = (page - 1) * PAGE_SIZE;
+    const end        = Math.min(start + PAGE_SIZE, total);
+
+    allRows.forEach(function (r, i) {
+        r.style.display = (i >= start && i < end) ? '' : 'none';
+    });
+
+    document.getElementById('pageInfo').textContent =
+        'Showing ' + (start + 1) + '–' + end + ' of ' + total + ' records';
+
+    const container = document.getElementById('pageNums');
+    container.innerHTML = '';
+
+    const prev = makeBtn('‹ Prev', page <= 1);
+    prev.onclick = () => renderPage(page - 1);
+    container.appendChild(prev);
+
+    const pages = new Set([1, totalPages]);
+    for (let p = Math.max(1, page - 2); p <= Math.min(totalPages, page + 2); p++) pages.add(p);
+    let prev_p = 0;
+    Array.from(pages).sort((a,b) => a-b).forEach(function (p) {
+        if (p - prev_p > 1) {
+            const gap = document.createElement('span');
+            gap.textContent = '…';
+            gap.style.cssText = 'padding:0.3rem 0.4rem;font-size:0.8rem;color:#adb5bd;';
+            container.appendChild(gap);
+        }
+        const btn = makeBtn(p, false);
+        if (p === page) btn.classList.add('active');
+        btn.onclick = () => renderPage(p);
+        container.appendChild(btn);
+        prev_p = p;
+    });
+
+    const next = makeBtn('Next ›', page >= totalPages);
+    next.onclick = () => renderPage(page + 1);
+    container.appendChild(next);
+}
+
+function makeBtn(label, disabled) {
+    const btn = document.createElement('button');
+    btn.className = 'page-btn';
+    btn.textContent = label;
+    btn.disabled = disabled;
+    return btn;
+}
+
+function exportExcel() {
+    allRows.forEach(r => r.style.display = '');
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.table_to_sheet(document.getElementById('reportTable'));
+    XLSX.utils.book_append_sheet(wb, ws, 'VAT Report');
+    const label = '{{ filters.month_label|default:"" }}' || '{{ filters.date_from }}_{{ filters.date_to }}';
+    XLSX.writeFile(wb, 'VAT_Report_' + label.replace(/ /g,'_') + '.xlsx');
+    renderPage(currentPage);
+}
+</script>
+{% endblock %}

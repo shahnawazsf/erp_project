@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}{{ invoice.invoice_number }}{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h4><i class="bi bi-receipt me-2"></i>{{ invoice.invoice_number }}</h4>
+    <a href="{% url 'finance_invoices' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+<div class="card p-4">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h6 class="fw-bold mb-3">Invoice Details</h6>
+            <dl class="row mb-0">
+                <dt class="col-sm-4 text-muted">Type</dt><dd class="col-sm-8">{{ invoice.get_invoice_type_display }}</dd>
+                <dt class="col-sm-4 text-muted">Party</dt><dd class="col-sm-8">{{ invoice.party_name }}</dd>
+                <dt class="col-sm-4 text-muted">Email</dt><dd class="col-sm-8">{{ invoice.party_email|default:"-" }}</dd>
+                <dt class="col-sm-4 text-muted">Issue Date</dt><dd class="col-sm-8">{{ invoice.issue_date }}</dd>
+                <dt class="col-sm-4 text-muted">Due Date</dt><dd class="col-sm-8">{{ invoice.due_date }}</dd>
+                <dt class="col-sm-4 text-muted">Status</dt>
+                <dd class="col-sm-8"><span class="badge {% if invoice.status == 'paid' %}bg-success{% elif invoice.status == 'sent' %}bg-primary{% elif invoice.status == 'cancelled' %}bg-danger{% else %}bg-secondary{% endif %}">{{ invoice.get_status_display }}</span></dd>
+            </dl>
+        </div>
+        <div class="col-md-6">
+            <div class="bg-light rounded p-3">
+                <div class="d-flex justify-content-between mb-2"><span>Subtotal:</span><strong>{{ invoice.subtotal|floatformat:2 }}</strong></div>
+                <div class="d-flex justify-content-between mb-2"><span>Tax:</span><strong>{{ invoice.tax_amount|floatformat:2 }}</strong></div>
+                <hr>
+                <div class="d-flex justify-content-between mb-2 fs-5"><strong>Total:</strong><strong class="text-primary">{{ invoice.total_amount|floatformat:2 }}</strong></div>
+                <div class="d-flex justify-content-between mb-2 text-success"><span>Paid:</span><strong>{{ invoice.paid_amount|floatformat:2 }}</strong></div>
+                <div class="d-flex justify-content-between text-danger"><span>Balance Due:</span><strong>{{ invoice.balance_due|floatformat:2 }}</strong></div>
+            </div>
+        </div>
+    </div>
+    {% if invoice.notes %}<div class="bg-light rounded p-3"><strong>Notes:</strong> {{ invoice.notes }}</div>{% endif %}
+</div>
+{% endblock %}

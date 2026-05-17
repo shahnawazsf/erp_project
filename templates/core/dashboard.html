@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-center" style="min-height: 60vh;">
+    <div class="text-center" style="color: #c0cad8;">
+        <i class="bi bi-speedometer2" style="font-size: 4rem; opacity: 0.3; display: block; margin-bottom: 1.25rem;"></i>
+        <h5 class="fw-semibold" style="color: #8a97a8; margin-bottom: 0.5rem;">Welcome, {{ user.get_full_name }}</h5>
+        <p class="mb-0 small" style="color: #adb5bd;">Dashboard widgets will appear here once data is connected.</p>
+    </div>
+</div>
+{% endblock %}

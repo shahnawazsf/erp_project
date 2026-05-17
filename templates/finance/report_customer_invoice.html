@@ -1,0 +1,452 @@
+{% extends 'base.html' %}
+{% block title %}Customer Invoice Report — Finance{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+<style>
+    /* Tom Select overrides to match the card UI */
+    .ts-wrapper.form-select-sm .ts-control {
+        font-size: 0.875rem; min-height: 31px; padding: 0.25rem 0.5rem;
+        border-radius: 6px; border-color: #dee2e6;
+    }
+    .ts-wrapper.single.input-active .ts-control,
+    .ts-wrapper.single .ts-control { background: #fff; }
+    .ts-dropdown { border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); border: 1px solid #e9ecef; font-size: 0.875rem; }
+    .ts-dropdown .option { padding: 0.5rem 0.85rem; }
+    .ts-dropdown .option.selected { background: #1a2e52; color: #fff; }
+    .ts-dropdown .option:hover, .ts-dropdown .option.active { background: #f0f4ff; color: #1a2e52; }
+    .ts-dropdown .option .agent-code { font-weight: 700; color: #1a2e52; min-width: 72px; display: inline-block; }
+    .ts-dropdown .option.selected .agent-code { color: #fff; }
+    .ts-dropdown-content { max-height: 240px; }
+</style>
+<style>
+    .filter-card { border-radius: 14px; border: none; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .report-table th {
+        font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.5px; color: #495057; background: #f8f9fa;
+        white-space: nowrap;
+    }
+    .report-table td { font-size: 0.875rem; vertical-align: middle; }
+    .report-table tfoot td {
+        font-weight: 700; font-size: 0.875rem;
+        background: #f0f4ff; border-top: 2px solid #dee2e6;
+    }
+    .amount-col { text-align: right; font-variant-numeric: tabular-nums; }
+    .empty-state { padding: 4rem 2rem; text-align: center; color: #adb5bd; }
+    .empty-state i { font-size: 3.5rem; display: block; margin-bottom: 0.75rem; }
+    .pagination-bar { padding: 0.75rem 1rem; border-top: 1px solid #e9ecef; background: #fafafa;
+        border-radius: 0 0 14px 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
+    .pagination-info { font-size: 0.8rem; color: #6c757d; }
+    .page-nums { display: flex; gap: 4px; flex-wrap: wrap; }
+    .page-btn { border: 1px solid #dee2e6; background: #fff; color: #495057; border-radius: 6px;
+        padding: 0.3rem 0.65rem; font-size: 0.8rem; cursor: pointer; transition: all 0.15s; line-height: 1.4; }
+    .page-btn:hover:not(.active):not(:disabled) { background: #f0f4ff; border-color: #4361ee; color: #4361ee; }
+    .page-btn.active { background: #1a2e52; border-color: #1a2e52; color: #fff; font-weight: 600; }
+    .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    @media print { .pagination-bar { display: none !important; } }
+
+    @media print {
+        .no-print { display: none !important; }
+        .main-content { margin-left: 0 !important; }
+        .sidebar, .topbar { display: none !important; }
+        .filter-card { display: none !important; }
+        .content-area { padding: 0 !important; }
+        .print-header { display: block !important; }
+        body { background: #fff !important; }
+        .card { box-shadow: none !important; border: 1px solid #dee2e6 !important; }
+    }
+    .print-header { display: none; margin-bottom: 1.5rem; }
+    .print-header h5 { font-size: 1.1rem; font-weight: 700; }
+
+    /* ── Loader overlay ── */
+    #reportLoader {
+        display: none;
+        position: fixed; inset: 0; z-index: 9999;
+        background: rgba(15, 23, 42, 0.55);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        align-items: center; justify-content: center;
+    }
+    #reportLoader.show { display: flex; }
+    .loader-box {
+        background: #fff;
+        border-radius: 20px;
+        padding: 2.5rem 3rem;
+        text-align: center;
+        box-shadow: 0 24px 60px rgba(0,0,0,0.18);
+        min-width: 280px;
+        animation: loaderIn 0.22s ease;
+    }
+    @keyframes loaderIn {
+        from { opacity: 0; transform: translateY(16px) scale(0.97); }
+        to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .loader-ring {
+        width: 58px; height: 58px;
+        border-radius: 50%;
+        border: 5px solid #e9ecef;
+        border-top-color: #1a2e52;
+        border-right-color: #4fc3f7;
+        animation: spin 0.85s linear infinite;
+        margin: 0 auto 1.25rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loader-dots span {
+        display: inline-block;
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: #1a2e52;
+        margin: 0 2px;
+        animation: dot-bounce 1.2s infinite ease-in-out;
+    }
+    .loader-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .loader-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes dot-bounce {
+        0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+        40%           { transform: scale(1);   opacity: 1; }
+    }
+    @media print { #reportLoader { display: none !important; } }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Loader overlay -->
+<div id="reportLoader">
+    <div class="loader-box">
+        <div class="loader-ring"></div>
+        <div class="fw-bold mb-1" style="color:#1a2e52; font-size:1rem;">Generating Report</div>
+        <div class="text-muted small mb-3">Querying Oracle database&hellip;</div>
+        <div class="loader-dots">
+            <span></span><span></span><span></span>
+        </div>
+    </div>
+</div>
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="no-print mb-3">
+    <ol class="breadcrumb small">
+        <li class="breadcrumb-item"><a href="{% url 'finance_reports' %}" class="text-decoration-none">Report Center</a></li>
+        <li class="breadcrumb-item active">Customer Invoice Report</li>
+    </ol>
+</nav>
+
+<!-- Page Header -->
+<div class="page-header d-flex align-items-center justify-content-between no-print">
+    <div>
+        <h4 class="mb-0"><i class="bi bi-file-earmark-text me-2" style="color:#6f42c1;"></i>Customer Invoice Report</h4>
+        <small class="text-muted">Invoice ledger by agent code for the selected period</small>
+    </div>
+    {% if generated and rows %}
+    <div class="d-flex gap-2">
+        <button class="btn btn-success btn-sm" onclick="exportExcel()">
+            <i class="bi bi-file-earmark-excel me-1"></i> Download Excel
+        </button>
+        <button class="btn btn-danger btn-sm" onclick="window.print()">
+            <i class="bi bi-file-earmark-pdf me-1"></i> Download PDF
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Filter Card -->
+<div class="card filter-card p-4 mb-4 no-print">
+    <form method="post" id="filterForm">
+        {% csrf_token %}
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label fw-semibold small text-uppercase text-muted">Agent</label>
+                <select name="agent_code" id="agentSelect" class="form-select form-select-sm" required>
+                    <option value="">Search agent code or name…</option>
+                    {% for agent in agents %}
+                    <option value="{{ agent.code }}"
+                        {% if filters.agent_code == agent.code %}selected{% endif %}>
+                        {{ agent.code }} — {{ agent.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+                {% if not agents %}
+                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>Could not load agent list</div>
+                {% endif %}
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold small text-uppercase text-muted">Date From</label>
+                <input type="date" name="date_from" class="form-control form-control-sm"
+                       value="{{ filters.date_from }}" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold small text-uppercase text-muted">Date To</label>
+                <input type="date" name="date_to" class="form-control form-control-sm"
+                       value="{{ filters.date_to }}" required>
+            </div>
+            <div class="col-md-3">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
+                        <i class="bi bi-funnel me-1"></i> Generate
+                    </button>
+                    {% if generated %}
+                    <a href="{% url 'report_customer_invoice' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-x-circle"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Applied Filters -->
+{% if generated %}
+<div class="d-flex gap-3 mb-3 no-print flex-wrap">
+    <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill">
+        <i class="bi bi-person-badge me-1"></i>
+        {{ filters.agent_code }}{% if filters.agent_name %} — {{ filters.agent_name }}{% endif %}
+    </span>
+    <span class="badge bg-info bg-opacity-10 text-info px-3 py-2 rounded-pill">
+        <i class="bi bi-calendar3 me-1"></i> {{ filters.date_from }} — {{ filters.date_to }}
+    </span>
+</div>
+{% endif %}
+
+<!-- Print Header -->
+<div class="print-header">
+    <h5><i class="bi bi-file-earmark-text me-1"></i> Customer Invoice Report</h5>
+    <small>
+        Agent: {{ filters.agent_code }}{% if filters.agent_name %} — {{ filters.agent_name }}{% endif %}
+        &nbsp;|&nbsp; Period: {{ filters.date_from }} to {{ filters.date_to }}
+    </small>
+    <hr>
+</div>
+
+<!-- Results -->
+{% if generated %}
+<div class="card" style="border-radius:14px; border:none; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+    <div class="card-header bg-white border-0 pt-3 pb-0 d-flex align-items-center justify-content-between no-print">
+        <h6 class="fw-bold mb-0">
+            Agent {{ filters.agent_code }} — Results
+            {% if rows %}
+            <span class="badge bg-primary ms-2">{{ rows|length }} record{{ rows|length|pluralize }}</span>
+            {% endif %}
+        </h6>
+        {% if rows %}
+        <div class="d-flex gap-2">
+            <button class="btn btn-success btn-sm" onclick="exportExcel()">
+                <i class="bi bi-file-earmark-excel me-1"></i> Excel
+            </button>
+            <button class="btn btn-danger btn-sm" onclick="window.print()">
+                <i class="bi bi-printer me-1"></i> PDF / Print
+            </button>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if rows %}
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 report-table" id="reportTable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Invoice No</th>
+                    <th>Invoice Date</th>
+                    <th>Cust Code</th>
+                    <th>Company</th>
+                    <th>OSO No</th>
+                    <th class="amount-col">Charge Amount</th>
+                    <th class="amount-col">VAT</th>
+                    <th class="amount-col">Total</th>
+                    <th>BOL Number</th>
+                    <th>BL No.</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    <td class="text-muted small">{{ forloop.counter }}</td>
+                    <td class="fw-semibold">{{ row.inv_no|default:"—" }}</td>
+                    <td>{{ row.inv_date|default:"—" }}</td>
+                    <td><code class="small">{{ row.cust_code|default:"—" }}</code></td>
+                    <td>{{ row.company|default:"—" }}</td>
+                    <td>{{ row.oso_no|default:"—" }}</td>
+                    <td class="amount-col">{{ row.charge_amount|default:"0.00" }}</td>
+                    <td class="amount-col text-warning fw-semibold">{{ row.vat|default:"0.00" }}</td>
+                    <td class="amount-col fw-bold">{{ row.total|default:"0.00" }}</td>
+                    <td class="text-muted small">{{ row.bolnumber|default:"—" }}</td>
+                    <td class="text-muted small">{{ row.bl1|default:"—" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="6" class="text-end pe-3">Totals</td>
+                    <td class="amount-col" id="totalCharge">—</td>
+                    <td class="amount-col text-warning" id="totalVat">—</td>
+                    <td class="amount-col" id="totalAmount">—</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <!-- Pagination bar -->
+    <div class="pagination-bar no-print" id="paginationBar">
+        <div class="pagination-info" id="pageInfo"></div>
+        <div class="page-nums" id="pageNums"></div>
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+        <i class="bi bi-inbox"></i>
+        No invoices found for agent <strong>{{ filters.agent_code }}</strong> in the selected period.
+    </div>
+    {% endif %}
+</div>
+
+{% else %}
+<div class="empty-state" style="padding:5rem 2rem; text-align:center; color:#adb5bd;">
+    <i class="bi bi-file-earmark-text" style="font-size:3.5rem; display:block; margin-bottom:0.75rem; opacity:0.4;"></i>
+    <p class="mb-0">Enter an Agent Code and date range, then click <strong>Generate</strong>.</p>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+const PAGE_SIZE = 25;
+let currentPage = 1;
+let allRows = [];
+
+/* ── Loader ── */
+document.getElementById('filterForm').addEventListener('submit', function () {
+    document.getElementById('reportLoader').classList.add('show');
+});
+
+/* Hide loader once page is fully loaded (handles browser back button too) */
+window.addEventListener('pageshow', function () {
+    document.getElementById('reportLoader').classList.remove('show');
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('reportLoader').classList.remove('show');
+
+    /* Searchable agent dropdown */
+    const agentEl = document.getElementById('agentSelect');
+    if (agentEl) {
+        new TomSelect(agentEl, {
+            placeholder: 'Search agent code or name…',
+            allowEmptyOption: true,
+            maxOptions: null,
+            searchField: ['text'],   /* searches the full "CODE — Name" text */
+            render: {
+                option: function (data, escape) {
+                    const parts = escape(data.text).split(' — ');
+                    const code = parts[0] || '';
+                    const name = parts.slice(1).join(' — ') || '';
+                    return '<div class="option"><span class="agent-code">' + code + '</span>'
+                         + (name ? ' <span class="text-muted">' + name + '</span>' : '') + '</div>';
+                },
+                item: function (data, escape) {
+                    return '<div>' + escape(data.text) + '</div>';
+                },
+            },
+        });
+    }
+
+    const tbody = document.querySelector('#reportTable tbody');
+    if (!tbody) return;
+
+    /* Cache all rows and compute grand totals */
+    allRows = Array.from(tbody.querySelectorAll('tr'));
+    let charge = 0, vat = 0, total = 0;
+    allRows.forEach(function (r) {
+        const c = r.querySelectorAll('td');
+        const p = i => parseFloat((c[i]?.textContent || '0').replace(/,/g, '')) || 0;
+        charge += p(6);
+        vat    += p(7);
+        total  += p(8);
+    });
+    const fmt = n => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    document.getElementById('totalCharge').textContent = fmt(charge);
+    document.getElementById('totalVat').textContent    = fmt(vat);
+    document.getElementById('totalAmount').textContent = fmt(total);
+
+    renderPage(1);
+});
+
+function renderPage(page) {
+    currentPage = page;
+    const total = allRows.length;
+    const totalPages = Math.ceil(total / PAGE_SIZE);
+    const start = (page - 1) * PAGE_SIZE;
+    const end   = Math.min(start + PAGE_SIZE, total);
+
+    allRows.forEach(function (r, i) {
+        r.style.display = (i >= start && i < end) ? '' : 'none';
+    });
+
+    /* Info text */
+    document.getElementById('pageInfo').textContent =
+        'Showing ' + (start + 1) + '–' + end + ' of ' + total + ' records';
+
+    /* Page number buttons */
+    const container = document.getElementById('pageNums');
+    container.innerHTML = '';
+
+    /* Prev */
+    const prev = makeBtn('‹ Prev', page <= 1);
+    prev.onclick = () => renderPage(page - 1);
+    container.appendChild(prev);
+
+    /* Page windows: always show first, last, and ±2 around current */
+    const pages = new Set();
+    pages.add(1);
+    pages.add(totalPages);
+    for (let p = Math.max(1, page - 2); p <= Math.min(totalPages, page + 2); p++) pages.add(p);
+    const sorted = Array.from(pages).sort((a, b) => a - b);
+
+    let prev_p = 0;
+    sorted.forEach(function (p) {
+        if (p - prev_p > 1) {
+            const gap = document.createElement('span');
+            gap.textContent = '…';
+            gap.style.cssText = 'padding:0.3rem 0.4rem;font-size:0.8rem;color:#adb5bd;';
+            container.appendChild(gap);
+        }
+        const btn = makeBtn(p, false);
+        if (p === page) btn.classList.add('active');
+        btn.onclick = () => renderPage(p);
+        container.appendChild(btn);
+        prev_p = p;
+    });
+
+    /* Next */
+    const next = makeBtn('Next ›', page >= totalPages);
+    next.onclick = () => renderPage(page + 1);
+    container.appendChild(next);
+}
+
+function makeBtn(label, disabled) {
+    const btn = document.createElement('button');
+    btn.className = 'page-btn';
+    btn.textContent = label;
+    btn.disabled = disabled;
+    return btn;
+}
+
+function exportExcel() {
+    /* Show all rows temporarily so SheetJS captures everything */
+    allRows.forEach(r => r.style.display = '');
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.table_to_sheet(document.getElementById('reportTable'));
+    XLSX.utils.book_append_sheet(wb, ws, 'Customer Invoice');
+    const agent  = '{{ filters.agent_code }}';
+    const period = '{{ filters.date_from }}_{{ filters.date_to }}';
+    XLSX.writeFile(wb, 'Customer_Invoice_' + agent + '_' + period + '.xlsx');
+    /* Restore current page view */
+    renderPage(currentPage);
+}
+</script>
+{% endblock %}

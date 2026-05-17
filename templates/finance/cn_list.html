@@ -1,0 +1,282 @@
+{% extends 'base.html' %}
+{% block title %}Container Notification{% endblock %}
+
+{% block extra_css %}
+<style>
+    .filter-card { border-radius: 14px; border: none; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .list-table th {
+        font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.5px; color: #495057; background: #f8f9fa; white-space: nowrap;
+    }
+    .list-table td { font-size: 0.875rem; vertical-align: middle; }
+    .empty-state { padding: 4rem 2rem; text-align: center; color: #adb5bd; }
+    .empty-state i { font-size: 3rem; display: block; margin-bottom: 0.75rem; }
+    .search-wrap .input-group-text { background:#fff; border-right:none; border-radius:8px 0 0 8px; }
+    .search-wrap .form-control    { border-left:none; border-radius:0 8px 8px 0; }
+    .search-wrap .form-control:focus { box-shadow:none; border-color:#dee2e6; }
+
+    /* Status badge styling */
+    .status-badge {
+        display: inline-block;
+        padding: 0.35em 0.65em;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeeba;
+    }
+    .status-received {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    /* ── Pagination ── */
+    .pagination-bar {
+        padding: 0.75rem 1rem; border-top: 1px solid #e9ecef; background: #fafafa;
+        border-radius: 0 0 14px 14px;
+        display: flex; align-items: center; justify-content: space-between;
+        flex-wrap: wrap; gap: 0.5rem;
+    }
+    .pagination-info { font-size: 0.8rem; color: #6c757d; }
+    .page-nums { display: flex; gap: 4px; flex-wrap: wrap; }
+    .page-btn {
+        border: 1px solid #dee2e6; background: #fff; color: #495057;
+        border-radius: 6px; padding: 0.3rem 0.65rem;
+        font-size: 0.8rem; cursor: pointer; transition: all 0.15s; line-height: 1.4;
+    }
+    .page-btn:hover:not(.active):not(:disabled) { background:#f0f4ff; border-color:#4361ee; color:#4361ee; }
+    .page-btn.active   { background:#1a2e52; border-color:#1a2e52; color:#fff; font-weight:600; }
+    .page-btn:disabled { opacity:0.4; cursor:not-allowed; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb small">
+        <li class="breadcrumb-item">
+            <a href="{% url 'finance_dashboard' %}" class="text-decoration-none">Finance</a>
+        </li>
+        <li class="breadcrumb-item active">Container Notification</li>
+    </ol>
+</nav>
+
+<!-- Page header -->
+<div class="page-header d-flex align-items-center justify-content-between">
+    <div>
+        <h4 class="mb-0">
+            <i class="bi bi-box-seam me-2" style="color:#0288d1;"></i>Container Notification
+        </h4>
+        <small class="text-muted">Manage received container notifications</small>
+    </div>
+    <a href="{% url 'cn_create' %}" class="btn btn-primary btn-sm px-3">
+        <i class="bi bi-plus-lg me-1"></i> Add Record
+    </a>
+</div>
+
+<!-- Search -->
+<div class="mb-3">
+    <div class="input-group input-group-sm search-wrap" style="max-width:360px;">
+        <span class="input-group-text"><i class="bi bi-search text-muted"></i></span>
+        <input type="text" id="searchInput" class="form-control"
+               placeholder="Search container no…" autocomplete="off">
+        <button class="btn btn-outline-secondary" id="clearSearch"
+                type="button" style="display:none;" title="Clear">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Table card -->
+<div class="card filter-card" id="listCard">
+    <div class="card-header bg-white border-0 pt-3 pb-0 d-flex align-items-center justify-content-between">
+        <h6 class="fw-bold mb-0">
+            Records
+            {% if rows %}
+            <span class="badge bg-primary ms-2">{{ rows|length }}</span>
+            {% endif %}
+        </h6>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 list-table" id="listTable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Container No</th>
+                    <th>Status</th>
+                    <th class="text-end pe-4">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    <td class="text-muted small">{{ forloop.counter }}</td>
+                    <td class="fw-semibold font-monospace">{{ row.crn_container_no }}</td>
+                    <td>
+                        {% if row.crn_status == 0 %}
+                            <span class="status-badge status-pending">
+                                <i class="bi bi-hourglass-split me-1"></i>Pending
+                            </span>
+                        {% elif row.crn_status == 9 %}
+                            <span class="status-badge status-received">
+                                <i class="bi bi-check-circle me-1"></i>Received
+                            </span>
+                        {% else %}
+                            <span class="status-badge" style="background:#e2e3e5; color:#383d41; border:1px solid #d6d8db;">
+                                Unknown ({{ row.crn_status }})
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end pe-3">
+                        <a href="{% url 'cn_edit' row.pk %}"
+                           class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-pencil me-1"></i>Edit
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr id="emptyRow">
+                    <td colspan="4">
+                        <div class="empty-state">
+                            <i class="bi bi-inbox"></i>
+                            No records yet.
+                            <a href="{% url 'cn_create' %}">Add the first one.</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+                <!-- shown by JS when search finds no matches -->
+                <tr id="noSearchResult" style="display:none;">
+                    <td colspan="4">
+                        <div class="empty-state">
+                            <i class="bi bi-search"></i>
+                            No containers match your search.
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination bar -->
+    <div class="pagination-bar" id="paginationBar" style="display:none;">
+        <div class="pagination-info" id="pageInfo"></div>
+        <div class="page-nums"      id="pageNums"></div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const PAGE_SIZE  = 25;
+let currentPage  = 1;
+let allRows      = [];   // every data row (never changes)
+let filteredRows = [];   // subset after search filter
+
+document.addEventListener('DOMContentLoaded', function () {
+    const tbody       = document.querySelector('#listTable tbody');
+    const searchInput = document.getElementById('searchInput');
+    const clearBtn    = document.getElementById('clearSearch');
+    const noResult    = document.getElementById('noSearchResult');
+    if (!tbody) return;
+
+    allRows      = Array.from(tbody.querySelectorAll('tr:not(#emptyRow):not(#noSearchResult)'));
+    filteredRows = allRows.slice();
+
+    if (allRows.length > 0) {
+        document.getElementById('paginationBar').style.display = 'flex';
+        renderPage(1);
+    }
+
+    /* Live search */
+    searchInput.addEventListener('input', function () {
+        const term = this.value.trim().toLowerCase();
+        clearBtn.style.display = term ? '' : 'none';
+
+        filteredRows = term
+            ? allRows.filter(r => r.cells[1].textContent.toLowerCase().includes(term))
+            : allRows.slice();
+
+        /* Show/hide no-result row */
+        if (noResult) noResult.style.display = filteredRows.length === 0 ? '' : 'none';
+
+        document.getElementById('paginationBar').style.display =
+            filteredRows.length > 0 ? 'flex' : 'none';
+
+        renderPage(1);
+    });
+
+    clearBtn.addEventListener('click', function () {
+        searchInput.value = '';
+        searchInput.dispatchEvent(new Event('input'));
+        searchInput.focus();
+    });
+});
+
+function renderPage(page) {
+    currentPage  = page;
+    const total      = filteredRows.length;
+    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    const start      = (page - 1) * PAGE_SIZE;
+    const end        = Math.min(start + PAGE_SIZE, total);
+
+    /* Hide all data rows, then show current page of filteredRows */
+    allRows.forEach(r => r.style.display = 'none');
+    filteredRows.slice(start, end).forEach(r => r.style.display = '');
+
+    if (total === 0) {
+        document.getElementById('pageInfo').textContent = '';
+        document.getElementById('pageNums').innerHTML   = '';
+        return;
+    }
+
+    document.getElementById('pageInfo').textContent =
+        'Showing ' + (start + 1) + '–' + end + ' of ' + total + ' records';
+
+    const container = document.getElementById('pageNums');
+    container.innerHTML = '';
+
+    const prev = makeBtn('‹ Prev', page <= 1);
+    prev.onclick = () => renderPage(page - 1);
+    container.appendChild(prev);
+
+    const pages = new Set([1, totalPages]);
+    for (let p = Math.max(1, page - 2); p <= Math.min(totalPages, page + 2); p++) pages.add(p);
+    let prev_p = 0;
+    Array.from(pages).sort((a, b) => a - b).forEach(function (p) {
+        if (p - prev_p > 1) {
+            const gap = document.createElement('span');
+            gap.textContent = '…';
+            gap.style.cssText = 'padding:0.3rem 0.4rem;font-size:0.8rem;color:#adb5bd;';
+            container.appendChild(gap);
+        }
+        const btn = makeBtn(p, false);
+        if (p === page) btn.classList.add('active');
+        btn.onclick = () => renderPage(p);
+        container.appendChild(btn);
+        prev_p = p;
+    });
+
+    const next = makeBtn('Next ›', page >= totalPages);
+    next.onclick = () => renderPage(page + 1);
+    container.appendChild(next);
+}
+
+function makeBtn(label, disabled) {
+    const btn = document.createElement('button');
+    btn.className   = 'page-btn';
+    btn.textContent = label;
+    btn.disabled    = disabled;
+    return btn;
+}
+</script>
+{% endblock %}

@@ -1,0 +1,492 @@
+================================================================================
+  Django ERP System - Setup Guide
+  Oracle 12c Database Edition
+================================================================================
+
+TABLE OF CONTENTS
+  1. Prerequisites
+  2. Project Structure
+  3. Oracle Database Setup
+  3.5. Oracle Authentication Procedure Setup
+  4. Oracle Instant Client Setup
+  5. Application Configuration (.env)
+  6. Python Dependencies
+  7. Run Migrations
+  8. Create Admin Account (Oracle Authentication)
+  9. Run the Application
+  10. ERP Modules Overview
+  11. Troubleshooting
+
+================================================================================
+1. PREREQUISITES
+================================================================================
+
+  - Python 3.9+ (tested on Python 3.14)
+  - Oracle Database 12c (or higher)
+  - Oracle Instant Client 21.x (for thick mode - recommended for Oracle 12c)
+  - pip (Python package manager)
+
+================================================================================
+2. PROJECT STRUCTURE
+================================================================================
+
+  erp_project/
+  ├── accounts/         User authentication & role management
+  │   └── backends.py   Oracle procedure authentication backend
+  ├── core/             Dashboard & shared utilities
+  ├── finance/          Invoices, expenses, chart of accounts
+  ├── hr/               Employees, departments, leave, payroll
+  ├── inventory/        Products, stock, warehouses, movements
+  ├── purchasing/       Purchase orders, suppliers
+  ├── sales/            Sales orders, customers
+  ├── templates/        HTML templates (Bootstrap 5)
+  ├── static/           Static files (CSS/JS)
+  ├── erp_project/      Django project settings & URLs
+  ├── .env              Your local environment config (create from .env.example)
+  ├── .env.example      Template for environment variables
+  ├── manage.py
+  └── SETUP_GUIDE.txt   This file
+
+================================================================================
+3. ORACLE DATABASE SETUP
+================================================================================
+
+  Connect to Oracle 12c as SYSDBA and run:
+
+  -- Step 1: Create a dedicated tablespace for ERP
+  CREATE TABLESPACE erp_data
+    DATAFILE 'erp_data.dbf'
+    SIZE 500M
+    AUTOEXTEND ON NEXT 100M
+    MAXSIZE 5G;
+
+  -- Step 2: Create the ERP schema/user
+  CREATE USER erp_user IDENTIFIED BY "YourPassword123"
+    DEFAULT TABLESPACE erp_data
+    TEMPORARY TABLESPACE temp
+    QUOTA UNLIMITED ON erp_data;
+
+  -- Step 3: Grant required privileges
+  GRANT CREATE SESSION TO erp_user;
+  GRANT CREATE TABLE TO erp_user;
+  GRANT CREATE SEQUENCE TO erp_user;
+  GRANT CREATE TRIGGER TO erp_user;
+  GRANT CREATE VIEW TO erp_user;
+  GRANT CREATE PROCEDURE TO erp_user;
+  GRANT CREATE SYNONYM TO erp_user;
+
+  -- Step 4: Verify connection
+  CONNECT erp_user/"YourPassword123"@//localhost:1521/ORCL
+
+  Notes:
+  - Replace "YourPassword123" with a strong password
+  - Replace ORCL with your Oracle service name or SID
+  - Find your service name: SELECT name FROM v$database;
+  - Find your SID: SELECT instance_name FROM v$instance;
+
+================================================================================
+3.5. ORACLE AUTHENTICATION PROCEDURE SETUP
+================================================================================
+
+  IMPORTANT: This ERP system authenticates ALL users through the Oracle stored
+  procedure GET_USER_DETAIL. Django's built-in password system is NOT used.
+  Passwords are stored and validated entirely inside Oracle.
+
+  --------------------------------------------------------------------------
+  STEP 1: Create the ERP_USERS source table
+  --------------------------------------------------------------------------
+
+  Connect as erp_user and run:
+
+    CREATE TABLE erp_users (
+        user_id     NUMBER         GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+        username    VARCHAR2(150)  NOT NULL UNIQUE,
+        password    VARCHAR2(255)  NOT NULL,
+        first_name  VARCHAR2(150),
+        last_name   VARCHAR2(150),
+        email       VARCHAR2(254),
+        role        VARCHAR2(20)   DEFAULT 'employee'
+                                   CHECK (role IN ('admin','manager','hr',
+                                                   'accountant','sales',
+                                                   'purchasing','warehouse',
+                                                   'employee')),
+        phone       VARCHAR2(20),
+        is_active   NUMBER(1)      DEFAULT 1 CHECK (is_active IN (0,1)),
+        created_at  TIMESTAMP      DEFAULT SYSTIMESTAMP
+    );
+
+  NOTE: Passwords are stored as SHA-256 hashes via STANDARD_HASH (available
+        from Oracle 12.1 onward). Never store plain-text passwords.
+
+  --------------------------------------------------------------------------
+  STEP 2: Create the GET_USER_DETAIL stored procedure
+  --------------------------------------------------------------------------
+
+  Connect as erp_user and run:
+
+    CREATE OR REPLACE PROCEDURE GET_USER_DETAIL (
+        p_username   IN  VARCHAR2,
+        p_password   IN  VARCHAR2,
+        p_user_id    OUT NUMBER,
+        p_first_name OUT VARCHAR2,
+        p_last_name  OUT VARCHAR2,
+        p_email      OUT VARCHAR2,
+        p_role       OUT VARCHAR2,
+        p_phone      OUT VARCHAR2,
+        p_is_active  OUT NUMBER,
+        p_status     OUT VARCHAR2
+    )
+    AS
+        v_stored_hash  VARCHAR2(255);
+        v_is_active    NUMBER(1);
+    BEGIN
+        p_user_id    := NULL;
+        p_first_name := NULL;
+        p_last_name  := NULL;
+        p_email      := NULL;
+        p_role       := NULL;
+        p_phone      := NULL;
+        p_is_active  := 0;
+        p_status     := 'FAILED';
+
+        BEGIN
+            SELECT user_id, first_name, last_name, email,
+                   role, phone, is_active, password
+              INTO p_user_id, p_first_name, p_last_name, p_email,
+                   p_role, p_phone, v_is_active, v_stored_hash
+              FROM erp_users
+             WHERE LOWER(username) = LOWER(p_username);
+        EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                p_status := 'FAILED';
+                RETURN;
+        END;
+
+        IF v_is_active = 0 THEN
+            p_status := 'FAILED';
+            RETURN;
+        END IF;
+
+        IF v_stored_hash != STANDARD_HASH(p_password, 'SHA256') THEN
+            p_status := 'FAILED';
+            RETURN;
+        END IF;
+
+        p_is_active := v_is_active;
+        p_status    := 'SUCCESS';
+
+    EXCEPTION
+        WHEN OTHERS THEN
+            p_is_active := 0;
+            p_status    := 'FAILED';
+    END GET_USER_DETAIL;
+    /
+
+  --------------------------------------------------------------------------
+  STEP 3: Verify the procedure compiled without errors
+  --------------------------------------------------------------------------
+
+    SELECT object_name, status FROM user_objects
+     WHERE object_name = 'GET_USER_DETAIL';
+    -- Expected: STATUS = VALID
+
+    -- If STATUS = INVALID, check errors:
+    SELECT line, text FROM user_errors WHERE name = 'GET_USER_DETAIL';
+
+  --------------------------------------------------------------------------
+  STEP 4: Test the procedure manually
+  --------------------------------------------------------------------------
+
+    DECLARE
+        v_id NUMBER; v_fn VARCHAR2(150); v_ln VARCHAR2(150);
+        v_em VARCHAR2(254); v_rl VARCHAR2(20); v_ph VARCHAR2(20);
+        v_ac NUMBER; v_st VARCHAR2(20);
+    BEGIN
+        GET_USER_DETAIL('admin','YourAdminPassword',
+                        v_id,v_fn,v_ln,v_em,v_rl,v_ph,v_ac,v_st);
+        DBMS_OUTPUT.PUT_LINE('Status: ' || v_st);
+        DBMS_OUTPUT.PUT_LINE('Role:   ' || v_rl);
+    END;
+    /
+
+================================================================================
+4. ORACLE INSTANT CLIENT SETUP (Required for Oracle 12c)
+================================================================================
+
+  Oracle 12c requires thick mode which needs Oracle Instant Client.
+
+  Step 1: Download Oracle Instant Client 21.x (Basic package)
+    URL: https://www.oracle.com/database/technologies/instant-client/winx64-64-downloads.html
+    Choose: instantclient-basic-windows.x64-21.x.x.x.zip
+
+  Step 2: Extract to a folder, e.g.:
+    C:\oracle\instantclient_21_10
+
+  Step 3: Add to Windows PATH (optional - or set ORACLE_CLIENT_DIR in .env):
+    System Properties > Environment Variables > PATH
+    Add: C:\oracle\instantclient_21_10
+
+  Step 4: Set ORACLE_CLIENT_DIR in your .env file:
+    ORACLE_CLIENT_DIR=C:\oracle\instantclient_21_10
+
+  Note: If you skip Instant Client, thin mode is used automatically but
+        some Oracle 12c features may not be available.
+
+================================================================================
+5. APPLICATION CONFIGURATION (.env)
+================================================================================
+
+  Step 1: Copy the example file:
+    copy .env.example .env
+
+  Step 2: Edit .env with your Oracle 12c connection details:
+
+    ORACLE_DB_HOST=localhost            # Your Oracle server IP or hostname
+    ORACLE_DB_PORT=1521                 # Default Oracle listener port
+    ORACLE_DB_NAME=ORCL                 # Your service name or SID
+    ORACLE_DB_USER=erp_user             # The user you created in step 3
+    ORACLE_DB_PASSWORD=YourPassword123  # The password you set
+    ORACLE_CLIENT_DIR=C:\oracle\instantclient_21_10   # Path to Instant Client
+
+  Common service names / SIDs:
+    - Oracle 12c default: ORCL
+    - Oracle 12c PDB:     ORCLPDB1 or ORCLCDB
+    - Oracle XE:          XEPDB1
+
+================================================================================
+6. PYTHON DEPENDENCIES
+================================================================================
+
+  Install all required packages:
+
+    pip install django djangorestframework pillow django-crispy-forms crispy-bootstrap5 django-widget-tweaks oracledb
+
+  Packages installed:
+    django               - Web framework
+    djangorestframework  - REST API support
+    pillow               - Image handling (product photos, avatars)
+    django-crispy-forms  - Better form rendering
+    crispy-bootstrap5    - Bootstrap 5 crispy forms template pack
+    django-widget-tweaks - Template-level form field customization
+    oracledb             - Oracle 12c database driver (replaces cx_Oracle)
+
+================================================================================
+7. RUN MIGRATIONS
+================================================================================
+
+  After configuring .env, create the database tables:
+
+    cd erp_project
+    python manage.py makemigrations
+    python manage.py migrate
+
+  This creates all ERP tables in your Oracle schema including:
+    - accounts_user            (custom user model)
+    - hr_department            (departments)
+    - hr_employee              (employee records)
+    - hr_leaverequest          (leave requests)
+    - hr_payroll               (payroll records)
+    - inventory_category       (product categories)
+    - inventory_warehouse      (warehouse locations)
+    - inventory_product        (products)
+    - inventory_stock          (stock levels per warehouse)
+    - inventory_stockmovement  (stock in/out history)
+    - finance_chartofaccounts  (accounting chart)
+    - finance_journal          (journal entries)
+    - finance_invoice          (AR/AP invoices)
+    - finance_expense          (expense claims)
+    - sales_customer           (customer master)
+    - sales_salesorder         (sales orders)
+    - sales_salesorderitem     (order line items)
+    - purchasing_supplier      (supplier master)
+    - purchasing_purchaseorder (purchase orders)
+    - purchasing_purchaseorderitem (PO line items)
+
+================================================================================
+8. CREATE ADMIN ACCOUNT (Oracle Authentication)
+================================================================================
+
+  IMPORTANT: All authentication goes through the Oracle procedure
+  GET_USER_DETAIL, so "python manage.py createsuperuser" will NOT work —
+  that command creates a Django-only user that cannot pass Oracle auth.
+
+  Insert the admin user directly into the erp_users Oracle table instead.
+
+  --------------------------------------------------------------------------
+  STEP 1: Get the SHA-256 hash of your chosen admin password
+  --------------------------------------------------------------------------
+
+    SELECT STANDARD_HASH('YourAdminPassword', 'SHA256') FROM DUAL;
+
+  Copy the returned 64-character hex string.
+
+  --------------------------------------------------------------------------
+  STEP 2: Insert the admin user
+  --------------------------------------------------------------------------
+
+    INSERT INTO erp_users (
+        username, password, first_name, last_name,
+        email, role, phone, is_active
+    ) VALUES (
+        'admin',
+        STANDARD_HASH('YourAdminPassword', 'SHA256'),
+        'System', 'Administrator',
+        'admin@yourcompany.com',
+        'admin', '', 1
+    );
+    COMMIT;
+
+  Replace 'YourAdminPassword' with a strong password of your choice.
+
+  --------------------------------------------------------------------------
+  STEP 3: First login activates Django admin access
+  --------------------------------------------------------------------------
+
+  Navigate to http://127.0.0.1:9000/accounts/login/ and log in with the
+  credentials above. On first successful login the backend automatically
+  sets is_staff=True and is_superuser=True (because role = 'admin'),
+  enabling access to the Django Admin panel:
+    http://127.0.0.1:9000/admin/
+
+  --------------------------------------------------------------------------
+  Adding more users
+  --------------------------------------------------------------------------
+
+    INSERT INTO erp_users (username, password, first_name, last_name,
+                           email, role, phone, is_active)
+    VALUES ('jsmith', STANDARD_HASH('StaffPassword1','SHA256'),
+            'John','Smith','jsmith@yourcompany.com','manager','+1-555-0100',1);
+    COMMIT;
+
+  Valid roles: admin, manager, hr, accountant, sales, purchasing, warehouse,
+               employee
+
+  To change a password:
+    UPDATE erp_users SET password = STANDARD_HASH('NewPassword','SHA256')
+     WHERE username = 'jsmith';
+    COMMIT;
+
+================================================================================
+9. RUN THE APPLICATION
+================================================================================
+
+  Start the development server:
+
+    python manage.py runserver 9000
+
+  Access the application:
+    Main App:     http://127.0.0.1:9000/
+    Admin Panel:  http://127.0.0.1:9000/admin/
+    Login Page:   http://127.0.0.1:9000/accounts/login/
+
+  NOTE: Port 8000 and 8080 are Windows-reserved on this machine
+  (Hyper-V TCP port exclusions). Use port 9000 or higher.
+
+  To run on a specific host/port:
+    python manage.py runserver 0.0.0.0:9000
+
+================================================================================
+10. ERP MODULES OVERVIEW
+================================================================================
+
+  MODULE          URL PREFIX      KEY FEATURES
+  ─────────────────────────────────────────────────────────────────────────
+  Dashboard       /               KPI cards, alerts, recent transactions
+  HR              /hr/            Employees, Departments, Leave, Payroll
+  Inventory       /inventory/     Products, Stock, Warehouses, Movements
+  Sales           /sales/         Sales Orders, Customers
+  Purchasing      /purchasing/    Purchase Orders, Suppliers
+  Finance         /finance/       Invoices, Expenses, Chart of Accounts
+  Admin           /admin/         Full database management via Django Admin
+
+  USER ROLES:
+    admin        - Full access to everything
+    manager      - View & manage all modules
+    hr           - HR module full access
+    accountant   - Finance module full access
+    sales        - Sales module full access
+    purchasing   - Purchasing module full access
+    warehouse    - Inventory module full access
+    employee     - View-only limited access
+
+================================================================================
+11. TROUBLESHOOTING
+================================================================================
+
+  ERROR: ORA-12541: TNS:no listener
+    > Oracle listener is not running
+    > Run: lsnrctl start (on Oracle server)
+
+  ERROR: ORA-01017: invalid username/password
+    > Check ORACLE_DB_USER and ORACLE_DB_PASSWORD in .env
+    > Verify: CONNECT erp_user/password@//host:port/service
+
+  ERROR: ORA-12514: TNS listener does not currently know of service
+    > Wrong service name. Check ORACLE_DB_NAME
+    > Run on Oracle: SELECT name FROM v$database;
+
+  ERROR: DPI-1047: Cannot locate a 64-bit Oracle Client library
+    > Oracle Instant Client not found
+    > Set ORACLE_CLIENT_DIR in .env to the Instant Client folder path
+
+  ERROR: ModuleNotFoundError: No module named 'django.db.backends.oracle'
+    > oracledb is not installed: pip install oracledb
+
+  ERROR: ORA-01950: no privileges on tablespace
+    > Grant quota: GRANT UNLIMITED TABLESPACE TO erp_user;
+
+  VERIFY CONNECTION from Python:
+    python -c "import oracledb; conn = oracledb.connect(user='erp_user', password='pass', dsn='localhost:1521/ORCL'); print('Connected:', conn.version)"
+
+  ─────────────────────────────────────────────
+  ORACLE AUTHENTICATION PROCEDURE ERRORS
+  ─────────────────────────────────────────────
+
+  ERROR: Login fails with "Invalid username or password" — no traceback
+    > The procedure returned 'FAILED'. Check:
+      1. Username exists:  SELECT * FROM erp_users WHERE username='xxx';
+      2. Account active:   is_active = 1
+      3. Hash matches:     SELECT STANDARD_HASH('yourpass','SHA256') FROM DUAL;
+                           compare with erp_users.password column
+
+  ERROR: ORA-06550 / PLS-00306: wrong number or types of arguments
+    > Procedure signature does not match backends.py.
+    > Expected: 10 params — 2 IN (VARCHAR2), 8 OUT (NUMBER/VARCHAR2 mix)
+    > Verify:  DESC GET_USER_DETAIL;
+
+  ERROR: ORA-00942: table or view does not exist (inside procedure)
+    > erp_users table is missing. Run the CREATE TABLE from section 3.5.
+    > Check:   SELECT table_name FROM user_tables WHERE table_name='ERP_USERS';
+
+  ERROR: STATUS = INVALID for GET_USER_DETAIL
+    > Check compilation errors:
+    > SELECT line, text FROM user_errors WHERE name='GET_USER_DETAIL';
+
+  ERROR: Django admin (/admin/) says "Please log in again"
+    > is_staff/is_superuser not set on the Django user row.
+    > Fix: log out and log back in — the backend resets flags on every login.
+    > Or directly in Oracle:
+      UPDATE accounts_user SET is_staff=1,is_superuser=1 WHERE username='admin';
+      COMMIT;
+
+  ERROR: You don't have permission to access that port (runserver)
+    > Windows Hyper-V has reserved ports 8000 and 8080 on this machine.
+    > Use port 9000:  python manage.py runserver 9000
+    > To check reserved ranges: netsh int ipv4 show excludedportrange protocol=tcp
+
+  ENABLE DETAILED AUTH LOGGING — add to erp_project/settings.py:
+
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {'console': {'class': 'logging.StreamHandler'}},
+        'loggers': {
+            'accounts.backends': {
+                'handlers': ['console'], 'level': 'DEBUG', 'propagate': False,
+            },
+        },
+    }
+
+================================================================================
+  ERP System v1.0 | Django 6.0 | Oracle 12c | Bootstrap 5
+================================================================================

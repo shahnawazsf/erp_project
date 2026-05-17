@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}Employees{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4><i class="bi bi-people me-2"></i>Employees</h4>
+        <p class="text-muted small">Manage your workforce</p>
+    </div>
+    <a href="{% url 'hr_employee_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i>Add Employee
+    </a>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body py-2">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-md-4">
+                <select name="department" class="form-select form-select-sm">
+                    <option value="">All Departments</option>
+                    {% for dept in departments %}
+                    <option value="{{ dept.id }}" {% if dept_filter == dept.id|stringformat:"s" %}selected{% endif %}>{{ dept.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">All Status</option>
+                    <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+                    <option value="on_leave" {% if status_filter == 'on_leave' %}selected{% endif %}>On Leave</option>
+                </select>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-sm btn-outline-primary" type="submit">Filter</button>
+                <a href="{% url 'hr_employees' %}" class="btn btn-sm btn-outline-secondary">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th><th>Name</th><th>Department</th><th>Designation</th>
+                    <th>Hire Date</th><th>Salary</th><th>Status</th><th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for emp in employees %}
+                <tr>
+                    <td><code>{{ emp.employee_id }}</code></td>
+                    <td>
+                        <strong>{{ emp.user.get_full_name }}</strong><br>
+                        <small class="text-muted">{{ emp.user.email }}</small>
+                    </td>
+                    <td>{{ emp.department.name|default:"-" }}</td>
+                    <td>{{ emp.designation }}</td>
+                    <td>{{ emp.hire_date }}</td>
+                    <td>{{ emp.salary|floatformat:0 }}</td>
+                    <td>
+                        <span class="badge badge-status
+                            {% if emp.status == 'active' %}bg-success
+                            {% elif emp.status == 'on_leave' %}bg-warning text-dark
+                            {% else %}bg-danger{% endif %}">
+                            {{ emp.get_status_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{% url 'hr_employee_detail' emp.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="8" class="text-center py-4 text-muted">No employees found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

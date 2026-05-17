@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Expenses{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h4><i class="bi bi-credit-card me-2"></i>Expenses</h4>
+    <a href="{% url 'finance_expense_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Add Expense</a>
+</div>
+<div class="card mb-3">
+    <div class="card-body py-2">
+        <form method="get" class="d-flex gap-2">
+            <select name="status" class="form-select form-select-sm" style="width:auto;">
+                <option value="">All Status</option>
+                <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approved</option>
+                <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+                <option value="paid" {% if status_filter == 'paid' %}selected{% endif %}>Paid</option>
+            </select>
+            <button class="btn btn-sm btn-outline-primary" type="submit">Filter</button>
+            <a href="{% url 'finance_expenses' %}" class="btn btn-sm btn-outline-secondary">Reset</a>
+        </form>
+    </div>
+</div>
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light"><tr><th>Title</th><th>Category</th><th>Amount</th><th>Date</th><th>Submitted By</th><th>Status</th></tr></thead>
+            <tbody>
+                {% for exp in expenses %}
+                <tr>
+                    <td><strong>{{ exp.title }}</strong><br><small class="text-muted">{{ exp.description|truncatechars:40 }}</small></td>
+                    <td>{{ exp.category }}</td>
+                    <td>{{ exp.amount|floatformat:0 }}</td>
+                    <td>{{ exp.date }}</td>
+                    <td>{{ exp.submitted_by }}</td>
+                    <td><span class="badge {% if exp.status == 'paid' %}bg-success{% elif exp.status == 'approved' %}bg-primary{% elif exp.status == 'rejected' %}bg-danger{% else %}bg-warning text-dark{% endif %}">{{ exp.get_status_display }}</span></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center py-4 text-muted">No expenses found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

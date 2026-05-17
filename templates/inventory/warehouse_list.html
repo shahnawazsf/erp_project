@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}Warehouses{% endblock %}
+{% block content %}
+<div class="page-header"><h4><i class="bi bi-building me-2"></i>Warehouses</h4></div>
+<div class="row g-3">
+    {% for wh in warehouses %}
+    <div class="col-md-4">
+        <div class="card p-4">
+            <i class="bi bi-building text-primary fs-2 mb-2"></i>
+            <h5 class="fw-bold">{{ wh.name }}</h5>
+            <p class="text-muted small mb-1"><i class="bi bi-geo-alt me-1"></i>{{ wh.location }}</p>
+            {% if wh.manager %}<p class="text-muted small"><i class="bi bi-person me-1"></i>{{ wh.manager }}</p>{% endif %}
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12"><div class="card p-4 text-center text-muted">No warehouses configured.</div></div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block title %}Finance Dashboard{% endblock %}
+{% block content %}
+<div class="page-header"><h4><i class="bi bi-bank me-2"></i>Finance Dashboard</h4></div>
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card" style="background:linear-gradient(135deg,#4facfe,#00f2fe);">
+            <div class="d-flex justify-content-between align-items-center">
+                <div><div class="small opacity-75">Accounts Receivable</div><div class="fs-4 fw-bold">{{ total_receivable|floatformat:0 }}</div></div>
+                <i class="bi bi-arrow-down-circle stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="background:linear-gradient(135deg,#f093fb,#f5576c);">
+            <div class="d-flex justify-content-between align-items-center">
+                <div><div class="small opacity-75">Accounts Payable</div><div class="fs-4 fw-bold">{{ total_payable|floatformat:0 }}</div></div>
+                <i class="bi bi-arrow-up-circle stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="background:linear-gradient(135deg,#f9c74f,#f8961e);">
+            <div class="d-flex justify-content-between align-items-center">
+                <div><div class="small opacity-75">Pending Expenses</div><div class="fs-2 fw-bold">{{ pending_expenses }}</div></div>
+                <i class="bi bi-credit-card stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 d-flex flex-row align-items-center gap-3">
+            <a href="{% url 'finance_invoices' %}" class="btn btn-primary btn-sm">Invoices</a>
+            <a href="{% url 'finance_expenses' %}" class="btn btn-outline-primary btn-sm">Expenses</a>
+        </div>
+    </div>
+</div>
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center pt-3">
+                <h6 class="fw-bold mb-0">Recent Invoices</h6>
+                <a href="{% url 'finance_invoices' %}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light"><tr><th>Invoice #</th><th>Party</th><th>Amount</th><th>Status</th></tr></thead>
+                    <tbody>
+                        {% for inv in recent_invoices %}
+                        <tr>
+                            <td><a href="{% url 'finance_invoice_detail' inv.pk %}" class="text-decoration-none">{{ inv.invoice_number }}</a></td>
+                            <td>{{ inv.party_name }}</td>
+                            <td>{{ inv.total_amount|floatformat:0 }}</td>
+                            <td><span class="badge {% if inv.status == 'paid' %}bg-success{% elif inv.status == 'sent' %}bg-primary{% elif inv.status == 'cancelled' %}bg-danger{% else %}bg-secondary{% endif %}">{{ inv.get_status_display }}</span></td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted py-3">No invoices.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center pt-3">
+                <h6 class="fw-bold mb-0">Recent Expenses</h6>
+                <a href="{% url 'finance_expenses' %}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light"><tr><th>Title</th><th>Category</th><th>Amount</th><th>Status</th></tr></thead>
+                    <tbody>
+                        {% for exp in recent_expenses %}
+                        <tr>
+                            <td>{{ exp.title }}</td>
+                            <td>{{ exp.category }}</td>
+                            <td>{{ exp.amount|floatformat:0 }}</td>
+                            <td><span class="badge {% if exp.status == 'paid' %}bg-success{% elif exp.status == 'approved' %}bg-primary{% elif exp.status == 'rejected' %}bg-danger{% else %}bg-warning text-dark{% endif %}">{{ exp.get_status_display }}</span></td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted py-3">No expenses.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

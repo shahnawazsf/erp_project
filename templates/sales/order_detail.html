@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}{{ order.order_number }}{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h4><i class="bi bi-cart me-2"></i>{{ order.order_number }}</h4>
+    <a href="{% url 'sales_orders' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card p-4">
+            <h6 class="fw-bold mb-3">Order Info</h6>
+            <dl class="row mb-0">
+                <dt class="col-sm-5 text-muted">Customer</dt><dd class="col-sm-7">{{ order.customer.name }}</dd>
+                <dt class="col-sm-5 text-muted">Order Date</dt><dd class="col-sm-7">{{ order.order_date }}</dd>
+                <dt class="col-sm-5 text-muted">Delivery</dt><dd class="col-sm-7">{{ order.delivery_date|default:"-" }}</dd>
+                <dt class="col-sm-5 text-muted">Status</dt>
+                <dd class="col-sm-7"><span class="badge {% if order.status == 'delivered' %}bg-success{% elif order.status == 'confirmed' %}bg-primary{% elif order.status == 'cancelled' %}bg-danger{% else %}bg-secondary{% endif %}">{{ order.get_status_display }}</span></dd>
+                <dt class="col-sm-5 text-muted">Notes</dt><dd class="col-sm-7">{{ order.notes|default:"-" }}</dd>
+            </dl>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card p-4">
+            <h6 class="fw-bold mb-3">Order Items</h6>
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead class="table-light"><tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Discount</th><th>Total</th></tr></thead>
+                    <tbody>
+                        {% for item in order.items.all %}
+                        <tr>
+                            <td>{{ item.product.name }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>{{ item.unit_price|floatformat:2 }}</td>
+                            <td>{{ item.discount|floatformat:2 }}</td>
+                            <td><strong>{{ item.total|floatformat:2 }}</strong></td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" class="text-muted">No items.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr><td colspan="4" class="text-end fw-bold">Subtotal:</td><td>{{ order.subtotal|floatformat:2 }}</td></tr>
+                        <tr><td colspan="4" class="text-end fw-bold">Discount:</td><td>{{ order.discount|floatformat:2 }}</td></tr>
+                        <tr><td colspan="4" class="text-end fw-bold">Tax:</td><td>{{ order.tax|floatformat:2 }}</td></tr>
+                        <tr><td colspan="4" class="text-end fw-bold text-primary">Total:</td><td><strong class="text-primary">{{ order.total|floatformat:2 }}</strong></td></tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

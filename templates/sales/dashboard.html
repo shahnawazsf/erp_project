@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Sales Dashboard{% endblock %}
+{% block content %}
+<div class="page-header"><h4><i class="bi bi-cart-check me-2"></i>Sales Dashboard</h4></div>
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card" style="background:linear-gradient(135deg,#667eea,#764ba2);">
+            <div class="d-flex justify-content-between align-items-center">
+                <div><div class="small opacity-75">Total Orders</div><div class="fs-2 fw-bold">{{ total_orders }}</div></div>
+                <i class="bi bi-cart stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="background:linear-gradient(135deg,#f093fb,#f5576c);">
+            <div class="d-flex justify-content-between align-items-center">
+                <div><div class="small opacity-75">Confirmed</div><div class="fs-2 fw-bold">{{ confirmed_orders }}</div></div>
+                <i class="bi bi-check-circle stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="background:linear-gradient(135deg,#4facfe,#00f2fe);">
+            <div class="d-flex justify-content-between align-items-center">
+                <div><div class="small opacity-75">Customers</div><div class="fs-2 fw-bold">{{ total_customers }}</div></div>
+                <i class="bi bi-people stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="background:linear-gradient(135deg,#43e97b,#38f9d7);">
+            <div class="d-flex justify-content-between align-items-center">
+                <div><div class="small opacity-75">Revenue</div><div class="fs-2 fw-bold">{{ revenue|floatformat:0 }}</div></div>
+                <i class="bi bi-currency-dollar stat-icon"></i>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="card">
+    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center pt-3">
+        <h6 class="fw-bold mb-0">Recent Sales Orders</h6>
+        <a href="{% url 'sales_orders' %}" class="btn btn-sm btn-outline-primary">View All</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light"><tr><th>Order #</th><th>Customer</th><th>Date</th><th>Total</th><th>Status</th></tr></thead>
+            <tbody>
+                {% for order in recent_orders %}
+                <tr>
+                    <td><a href="{% url 'sales_order_detail' order.pk %}" class="text-decoration-none">{{ order.order_number }}</a></td>
+                    <td>{{ order.customer.name }}</td>
+                    <td>{{ order.order_date }}</td>
+                    <td>{{ order.total|floatformat:0 }}</td>
+                    <td><span class="badge badge-status {% if order.status == 'delivered' %}bg-success{% elif order.status == 'confirmed' %}bg-primary{% elif order.status == 'cancelled' %}bg-danger{% else %}bg-secondary{% endif %}">{{ order.get_status_display }}</span></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center py-4 text-muted">No orders yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

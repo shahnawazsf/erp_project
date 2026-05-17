@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Invoices{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h4><i class="bi bi-receipt me-2"></i>Invoices</h4>
+    <a href="{% url 'finance_invoice_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>New Invoice</a>
+</div>
+<div class="card mb-3">
+    <div class="card-body py-2">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-md-3">
+                <select name="type" class="form-select form-select-sm">
+                    <option value="">All Types</option>
+                    <option value="sales" {% if type_filter == 'sales' %}selected{% endif %}>Sales Invoice</option>
+                    <option value="purchase" {% if type_filter == 'purchase' %}selected{% endif %}>Purchase Invoice</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">All Status</option>
+                    <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>Draft</option>
+                    <option value="sent" {% if status_filter == 'sent' %}selected{% endif %}>Sent</option>
+                    <option value="paid" {% if status_filter == 'paid' %}selected{% endif %}>Paid</option>
+                    <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                </select>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-sm btn-outline-primary" type="submit">Filter</button>
+                <a href="{% url 'finance_invoices' %}" class="btn btn-sm btn-outline-secondary">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light"><tr><th>Invoice #</th><th>Type</th><th>Party</th><th>Issue Date</th><th>Due Date</th><th>Total</th><th>Paid</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+                {% for inv in invoices %}
+                <tr>
+                    <td><strong>{{ inv.invoice_number }}</strong></td>
+                    <td><span class="badge {% if inv.invoice_type == 'sales' %}bg-info{% else %}bg-warning text-dark{% endif %}">{{ inv.get_invoice_type_display }}</span></td>
+                    <td>{{ inv.party_name }}</td>
+                    <td>{{ inv.issue_date }}</td>
+                    <td>{{ inv.due_date }}</td>
+                    <td>{{ inv.total_amount|floatformat:0 }}</td>
+                    <td>{{ inv.paid_amount|floatformat:0 }}</td>
+                    <td><span class="badge {% if inv.status == 'paid' %}bg-success{% elif inv.status == 'sent' %}bg-primary{% elif inv.status == 'cancelled' %}bg-danger{% else %}bg-secondary{% endif %}">{{ inv.get_status_display }}</span></td>
+                    <td><a href="{% url 'finance_invoice_detail' inv.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="9" class="text-center py-4 text-muted">No invoices found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

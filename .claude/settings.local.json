@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(python -c \"import django; print\\(django.__version__\\)\")",
+      "PowerShell(New-Item *)",
+      "PowerShell(python -c \"import inspect, django.db.backends.oracle.base as ob; print\\(inspect.getsource\\(ob.DatabaseWrapper.__init__\\)\\)\" 2>&1 | Select-Object -First 30)",
+      "PowerShell(python -c \"import django.db.backends.oracle.base as ob; print\\('class attr:', ob.DatabaseWrapper.minimum_database_version\\); import inspect; src = inspect.getsource\\(ob.DatabaseWrapper\\); print\\('minimum_database_version in src:', 'minimum_database_version' in src\\)\" 2>&1)",
+      "PowerShell(python -c \"import django.db.backends.base.base as bb; import inspect; src = inspect.getsource\\(bb.BaseDatabaseWrapper\\); lines = [\\(i+1, l\\) for i, l in enumerate\\(src.split\\('\\\\n'\\)\\) if 'minimum_database_version' in l]; print\\('\\\\n'.join\\(f'{ln}: {l}' for ln, l in lines\\)\\)\" 2>&1)",
+      "PowerShell(python -c \"import django.db.backends.oracle.base as ob; print\\(ob.DatabaseWrapper.features_class.minimum_database_version\\)\" 2>&1)",
+      "PowerShell(netsh int *)",
+      "PowerShell(netstat *)",
+      "PowerShell(Get-Process *)",
+      "PowerShell(cd \"E:\\\\Testing\\\\projects\\\\erp_project\"; python -c \"import os; os.environ['DJANGO_SETTINGS_MODULE']='erp_project.settings'; import django; django.setup\\(\\); from django.db import connection; cursor = connection.cursor\\(\\); cursor.execute\\(\\\\\"SELECT table_name FROM user_tables WHERE table_name IN \\('DJANGO_MIGRATIONS', 'DJANGO_CONTENT_TYPE', 'AUTH_USER'\\)\\\\\"\\); print\\(cursor.fetchall\\(\\)\\)\" 2>&1)",
+      "mcp__ide__getDiagnostics",
+      "PowerShell(cd \"E:\\\\Testing\\\\projects\\\\erp_project\"; python -c \"import django\" 2>&1; echo \"Exit: $LASTEXITCODE\")",
+      "PowerShell(cd \"E:\\\\Testing\\\\projects\\\\erp_project\"; $env:DJANGO_SETTINGS_MODULE = \"erp_project.settings\"; python manage.py check 2>&1)",
+      "PowerShell(cd \"E:\\\\Testing\\\\projects\\\\erp_project\"; python -m py_compile accounts\\\\backends.py; echo \"OK: $LASTEXITCODE\")",
+      "PowerShell(Test-NetConnection *)",
+      "PowerShell(code \"E:\\\\Testing\\\\projects\\\\erp_project\")"
+    ]
+  }
+}

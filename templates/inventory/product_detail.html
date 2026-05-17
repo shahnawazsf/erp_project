@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block title %}{{ product.name }}{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h4><i class="bi bi-box-seam me-2"></i>{{ product.name }}</h4>
+    <a href="{% url 'inventory_products' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card p-4 text-center">
+            {% if product.image %}
+            <img src="{{ product.image.url }}" class="img-fluid rounded mb-3" style="max-height:200px;object-fit:contain;">
+            {% else %}
+            <div class="bg-light rounded d-flex align-items-center justify-content-center mx-auto mb-3" style="width:120px;height:120px;">
+                <i class="bi bi-box text-muted" style="font-size:3rem;"></i>
+            </div>
+            {% endif %}
+            <h5 class="fw-bold">{{ product.name }}</h5>
+            <code>{{ product.code }}</code>
+            <div class="mt-2">
+                {% if product.is_low_stock %}
+                <span class="badge bg-danger">Low Stock: {{ product.total_stock }}</span>
+                {% else %}
+                <span class="badge bg-success">In Stock: {{ product.total_stock }}</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card p-4 mb-3">
+            <h6 class="fw-bold mb-3">Product Info</h6>
+            <dl class="row mb-0">
+                <dt class="col-sm-4 text-muted">Category</dt><dd class="col-sm-8">{{ product.category.name|default:"-" }}</dd>
+                <dt class="col-sm-4 text-muted">Unit</dt><dd class="col-sm-8">{{ product.get_unit_display }}</dd>
+                <dt class="col-sm-4 text-muted">Cost Price</dt><dd class="col-sm-8">{{ product.cost_price|floatformat:2 }}</dd>
+                <dt class="col-sm-4 text-muted">Sale Price</dt><dd class="col-sm-8">{{ product.sale_price|floatformat:2 }}</dd>
+                <dt class="col-sm-4 text-muted">Reorder Level</dt><dd class="col-sm-8">{{ product.reorder_level }}</dd>
+                <dt class="col-sm-4 text-muted">Description</dt><dd class="col-sm-8">{{ product.description|default:"-" }}</dd>
+            </dl>
+        </div>
+        <div class="card p-4">
+            <h6 class="fw-bold mb-3">Recent Stock Movements</h6>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light">
+                        <tr><th>Date</th><th>Type</th><th>Qty</th><th>Reference</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for m in movements %}
+                        <tr>
+                            <td>{{ m.created_at|date:"Y-m-d" }}</td>
+                            <td>
+                                <span class="badge {% if m.movement_type == 'in' %}bg-success{% elif m.movement_type == 'out' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                    {{ m.get_movement_type_display }}
+                                </span>
+                            </td>
+                            <td>{{ m.quantity }}</td>
+                            <td>{{ m.reference|default:"-" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-muted text-center">No movements recorded.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
