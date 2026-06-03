@@ -10,12 +10,64 @@
 ## Table of Contents
 
 1. [Project Setup](#1-project-setup)
-2. [Database Configuration](#2-database-configuration)
-3. [Authentication System](#3-authentication-system)
-4. [Role-Based Access Control](#4-role-based-access-control)
-5. [Module Management](#5-module-management)
-6. [Container Notification Feature](#6-container-notification-feature)
-7. [Common Issues & Fixes](#7-common-issues--fixes)
+2. [Running the Application](#2-running-the-application)
+3. [Database Configuration](#3-database-configuration)
+4. [Authentication System](#4-authentication-system)
+5. [Role-Based Access Control](#5-role-based-access-control)
+6. [Module Management](#6-module-management)
+7. [Container Notification Feature](#7-container-notification-feature)
+8. [Recent Updates (June 2026)](#recent-updates-june-2026)
+9. [Common Issues & Fixes](#8-common-issues--fixes)
+
+---
+
+## Recent Updates (June 2026)
+
+### June 3: Customer Invoice Report & UI Enhancements
+
+#### 1. Customer Invoice Report Query Refactored
+**File:** `finance/views.py` (lines 235-254), `templates/finance/report_customer_invoice.html`
+
+**Changes:**
+- Migrated from `Custom_report` table to `INV_WEEKLY_REPORT_VIEW` with BOL lookup
+- Added LEFT JOIN to `INV_WEEKLY_REPORT_BL_VIEW` to fetch associated BOL numbers
+- Fixed date filtering issue: Converted DD/MM/YYYY string comparison to YYYY-MM-DD format
+- Report now displays two BOLNUMBER columns: one from invoice, one from BOL view
+
+**Technical Detail - Date Filtering:**
+The view returns INV_DATE as VARCHAR 'dd/mm/yyyy', which doesn't sort correctly with string comparison. Solution: Use SUBSTR to convert to YYYY-MM-DD format before comparison.
+
+```python
+# Python: Convert form dates (YYYY-MM-DD) to DD/MM/YYYY for Oracle
+d1 = datetime.strptime(filters['date_from'], '%Y-%m-%d').strftime('%d/%m/%Y')
+
+# Oracle: Convert view dates back to YYYY-MM-DD for proper string comparison
+SUBSTR(a.INV_DATE, 7, 4) || '-' || SUBSTR(a.INV_DATE, 4, 2) || '-' || SUBSTR(a.INV_DATE, 1, 2)
+```
+
+#### 2. Global Page Loader - Content Area Only
+**File:** `templates/base.html` (CSS and HTML structure)
+
+**Changes:**
+- Redesigned page loader from full-viewport (`position: fixed`) to content-area only (`position: absolute`)
+- Loader now appears within main-content area, keeping sidebar and topbar visible and interactive
+- Positioned 58px from top (below topbar height) and spans full width/height of content
+- Automatically shows on all navigation links and form submissions
+- Supports smooth transitions with backdrop blur effect
+
+**Why This Matters:**
+Users can now navigate and use the sidebar while content is loading, improving UX significantly.
+
+#### 3. Login Page Rebranding to "Reporting Tool"
+**File:** `templates/accounts/login.html`
+
+**Changes:**
+- Brand title: "ERP System" → "Reporting Tool"
+- Subtitle: "Enterprise Resource Planning" → "Analytics & Reporting Platform"
+- **Removed:** Module feature list (HR, Inventory, Sales, Finance sections)
+- Footer: Updated copyright to "Reporting Tool"
+
+**Result:** Cleaner, more focused branding that reflects the reporting-centric purpose of the system.
 
 ---
 
@@ -100,7 +152,153 @@ erp_project/
 
 ---
 
-## 2. Database Configuration
+## 2. Running the Application
+
+### 2.1 Localhost Only
+
+**What is this?**
+Running the development server on your local machine. This is the default configuration.
+
+**Step 1: Basic Localhost Server**
+
+```bash
+# Activate virtual environment (if not already active)
+venv\Scripts\activate
+
+# Start the dev server (port 9001 is used to avoid conflicts with Hyper-V)
+python manage.py runserver 9001
+```
+
+**Access:**
+- http://localhost:9001
+- http://127.0.0.1:9001
+
+**How it works:**
+- Server binds to `127.0.0.1:9001` (localhost only)
+- Not accessible from other machines
+- Best for isolated development
+
+---
+
+### 2.2 LAN Access (Network-Wide)
+
+**What is this?**
+Making the application accessible from other computers on your network. Useful for team testing or demos.
+
+**Prerequisites:**
+- Know your machine's LAN IP address
+- Both machines must be on the same network
+- Firewall must allow port 9001
+
+**Step 1: Find Your LAN IP Address**
+
+**On Windows (PowerShell):**
+```powershell
+ipconfig | Select-String -Pattern 'IPv4 Address'
+```
+
+Look for output like:
+```
+   IPv4 Address. . . . . . . . . . . : 172.16.2.3
+```
+
+**On Mac/Linux:**
+```bash
+ifconfig | grep "inet " | grep -v 127.0.0.1
+```
+
+---
+
+**Step 2: Update Django Settings**
+
+Edit `erp_project/settings.py` and add your LAN IP to `CSRF_TRUSTED_ORIGINS`:
+
+```python
+# Current setting
+CSRF_TRUSTED_ORIGINS = ['http://localhost:9001', 'http://127.0.0.1:9001']
+
+# Add your LAN IP (example: 172.16.2.3)
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:9001',
+    'http://127.0.0.1:9001',
+    'http://172.16.2.3:9001'  # Replace with your actual IP
+]
+```
+
+**Why?** Django blocks form submissions from untrusted origins for security. Your LAN IP needs to be explicitly trusted.
+
+---
+
+**Step 3: Start Server on All Interfaces**
+
+```bash
+# Activate virtual environment
+venv\Scripts\activate
+
+# Start on 0.0.0.0:9001 (listens on all network interfaces)
+python manage.py runserver 0.0.0.0:9001
+```
+
+**Important:** `0.0.0.0:9001` binds to all network interfaces, including LAN.
+
+---
+
+**Step 4: Access from Another Machine**
+
+From any computer on your network:
+
+```
+http://172.16.2.3:9001
+```
+
+Replace `172.16.2.3` with your actual IP address from Step 1.
+
+---
+
+### 2.3 Quick Reference
+
+**Summary Table:**
+
+| Scenario | Command | Access From |
+|----------|---------|-------------|
+| **Local only** | `python manage.py runserver 9001` | localhost, 127.0.0.1 |
+| **LAN access** | `python manage.py runserver 0.0.0.0:9001` | localhost, 127.0.0.1, LAN IP |
+
+**Settings Update Checklist:**
+- [ ] `ALLOWED_HOSTS = ['*']` (already set for LAN)
+- [ ] `CSRF_TRUSTED_ORIGINS` includes your LAN IP
+- [ ] Firewall allows port 9001
+- [ ] Server started with `0.0.0.0:9001`
+
+---
+
+### 2.4 Troubleshooting Access Issues
+
+**Can't connect from another machine?**
+
+1. **Verify server is running:**
+   ```bash
+   netstat -an | findstr 9001  # Windows
+   ```
+
+2. **Check firewall (Windows):**
+   - Go to Windows Defender Firewall → Allow an app through
+   - Add Python.exe for port 9001
+   - Or disable firewall temporarily for testing
+
+3. **Test connectivity:**
+   ```bash
+   # From the other machine
+   ping 172.16.2.3
+   ```
+
+4. **Wrong IP in URL?**
+   - Always use the IP from `ipconfig | Select-String 'IPv4 Address'`
+   - Never use 127.0.0.1 or localhost from another machine
+
+---
+
+## 3. Database Configuration
 
 ### 2.1 Oracle Database Connection
 

@@ -59,13 +59,17 @@
     .print-header h5 { font-size: 1.1rem; font-weight: 700; }
 
     /* ── Loader overlay ── */
+    #reportContainer {
+        position: relative;
+    }
     #reportLoader {
         display: none;
-        position: fixed; inset: 0; z-index: 9999;
+        position: absolute; inset: 0; z-index: 9999;
         background: rgba(15, 23, 42, 0.55);
         backdrop-filter: blur(4px);
         -webkit-backdrop-filter: blur(4px);
         align-items: center; justify-content: center;
+        border-radius: 14px;
     }
     #reportLoader.show { display: flex; }
     .loader-box {
@@ -110,18 +114,6 @@
 {% endblock %}
 
 {% block content %}
-
-<!-- Loader overlay -->
-<div id="reportLoader">
-    <div class="loader-box">
-        <div class="loader-ring"></div>
-        <div class="fw-bold mb-1" style="color:#1a2e52; font-size:1rem;">Generating Report</div>
-        <div class="text-muted small mb-3">Querying Oracle database&hellip;</div>
-        <div class="loader-dots">
-            <span></span><span></span><span></span>
-        </div>
-    </div>
-</div>
 
 <!-- Breadcrumb -->
 <nav aria-label="breadcrumb" class="no-print mb-3">
@@ -219,9 +211,22 @@
 </div>
 
 <!-- Results -->
-{% if generated %}
-<div class="card" style="border-radius:14px; border:none; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-    <div class="card-header bg-white border-0 pt-3 pb-0 d-flex align-items-center justify-content-between no-print">
+<div id="reportContainer">
+    <!-- Loader overlay (only shows on report section) -->
+    <div id="reportLoader">
+        <div class="loader-box">
+            <div class="loader-ring"></div>
+            <div class="fw-bold mb-1" style="color:#1a2e52; font-size:1rem;">Generating Report</div>
+            <div class="text-muted small mb-3">Querying Oracle database&hellip;</div>
+            <div class="loader-dots">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+    </div>
+
+    {% if generated %}
+    <div class="card" style="border-radius:14px; border:none; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+        <div class="card-header bg-white border-0 pt-3 pb-0 d-flex align-items-center justify-content-between no-print">
         <h6 class="fw-bold mb-0">
             Agent {{ filters.agent_code }} — Results
             {% if rows %}
@@ -271,7 +276,7 @@
                     <td class="amount-col text-warning fw-semibold">{{ row.vat|default:"0.00" }}</td>
                     <td class="amount-col fw-bold">{{ row.total|default:"0.00" }}</td>
                     <td class="text-muted small">{{ row.bolnumber|default:"—" }}</td>
-                    <td class="text-muted small">{{ row.bl1|default:"—" }}</td>
+                    <td class="text-muted small">{{ row.bolnumber_1|default:"—" }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -294,12 +299,13 @@
         <div class="page-nums" id="pageNums"></div>
     </div>
 
-    {% else %}
-    <div class="empty-state">
-        <i class="bi bi-inbox"></i>
-        No invoices found for agent <strong>{{ filters.agent_code }}</strong> in the selected period.
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            No invoices found for agent <strong>{{ filters.agent_code }}</strong> in the selected period.
+        </div>
+        {% endif %}
     </div>
-    {% endif %}
 </div>
 
 {% else %}

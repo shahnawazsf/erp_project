@@ -235,19 +235,26 @@ def report_customer_invoice(request):
         if filters['date_from'] and filters['date_to'] and filters['agent_code']:
             generated = True
             try:
+                from datetime import datetime
                 with connection.cursor() as django_cur:
                     cur = django_cur.cursor.cursor
-                    cur.execute("""
-                        SELECT a.inv_no, a.inv_date, a.cust_code, a.agent_code, a.company,
-                               a.oso_no, a.charge_amount, a.vat, a.total, a.bolnumber, b.bolnumber
-                        FROM INV_WEEKLY_REPORT_VIEW a, INV_WEEKLY_REPORT_BL_VIEW b
-                        WHERE a.inv_no = b.inv_no
-                          AND a.inv_date >= :d1
-                          AND a.inv_date <= :d2
-                          AND a.agent_code = :AG
-                    """, {'d1': filters['date_from'],
-                          'd2': filters['date_to'],
-                          'AG': filters['agent_code']})
+                    d1_yyyy_mm_dd = filters['date_from']
+                    d2_yyyy_mm_dd = filters['date_to']
+                    query = f"""
+                        SELECT a.INV_NO, a.INV_DATE, a.CUST_CODE, a.AGENT_CODE, a.COMPANY, a.OSO_NO,
+                               a.CHARGE_AMOUNT, a.VAT, a.TOTAL, a.BOLNUMBER, b.BOLNUMBER AS BOLNUMBER_1
+                        FROM INV_WEEKLY_REPORT_VIEW a
+                        LEFT JOIN (
+                            SELECT INV_NO, BOLNUMBER,
+                                   ROW_NUMBER() OVER (PARTITION BY INV_NO ORDER BY BOLNUMBER) rn
+                            FROM INV_WEEKLY_REPORT_BL_VIEW
+                        ) b
+                        ON a.INV_NO = b.INV_NO AND b.rn = 1
+                        WHERE a.AGENT_CODE = '{filters['agent_code']}'
+                        AND SUBSTR(a.INV_DATE, 7, 4) || '-' || SUBSTR(a.INV_DATE, 4, 2) || '-' || SUBSTR(a.INV_DATE, 1, 2) >= '{d1_yyyy_mm_dd}'
+                        AND SUBSTR(a.INV_DATE, 7, 4) || '-' || SUBSTR(a.INV_DATE, 4, 2) || '-' || SUBSTR(a.INV_DATE, 1, 2) <= '{d2_yyyy_mm_dd}'
+                    """
+                    cur.execute(query)
                     cols = [d[0].lower() for d in cur.description]
                     rows = [dict(zip(cols, row)) for row in cur.fetchall()]
             except Exception:
