@@ -71,6 +71,109 @@ Users can now navigate and use the sidebar while content is loading, improving U
 
 ---
 
+### June 4: Phase 1 Header/Footer Features & Production Deployment
+
+#### 1. Global Search Bar (Header)
+**File:** `templates/base.html` (lines 359-365 HTML, 84-117 CSS, 497-538 JS)
+
+**Features:**
+- Search input in topbar left section (320px width)
+- Debounced search with 300ms delay to prevent excessive calls
+- Dropdown results showing matching reports and navigation items
+- Currently shows mock data: Customer Invoice, VAT Report, Dashboard, Reports
+- Click result to navigate directly to that page
+- Auto-closes when clicking outside
+
+**Current Implementation:**
+Mock JavaScript-based search with hardcoded results. Ready to connect to real API endpoint.
+
+**To Enhance:**
+```python
+# Add to finance/views.py or core/views.py
+@login_required
+@require_GET
+def api_search(request):
+    query = request.GET.get('q', '')
+    results = {
+        'reports': [...],
+        'invoices': [...],
+    }
+    return JsonResponse(results)
+```
+
+#### 2. Settings Dropdown (Header)
+**File:** `templates/base.html` (lines 368-385 HTML, 119-156 CSS, 540-565 JS)
+
+**Features:**
+- Gear icon in topbar right section (before logout)
+- Menu with settings options:
+  - Date Format (DD/MM/YYYY)
+  - Theme (Light Mode)
+  - Timezone (UTC)
+  - Help & Documentation
+- Toggle open/close on click
+- Auto-closes when clicking outside
+
+**Current Implementation:**
+Menu items are stubs that log to console. Ready to implement actual preferences.
+
+**To Enhance:**
+Create UserPreferences model and settings save endpoint:
+```python
+class UserPreferences(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    date_format = models.CharField(choices=[('DD/MM/YYYY', 'DD/MM/YYYY'), ...])
+    theme = models.CharField(choices=[('light', 'Light'), ('dark', 'Dark')])
+    timezone = models.CharField(default='UTC')
+```
+
+#### 3. Footer with Copyright
+**File:** `templates/base.html` (lines 429-434 HTML, 158-194 CSS)
+
+**Features:**
+- Simple footer at bottom of all authenticated pages
+- Copyright text: "© 2026 SDES Reporting Tool. All rights reserved."
+- Uses flexbox layout to automatically push to bottom
+- Minimal, clean design
+
+**Layout Strategy:**
+```css
+.main-content { 
+    display: flex; 
+    flex-direction: column; 
+    min-height: 100vh; 
+}
+.content-area { flex: 1; }
+/* footer naturally appears at bottom */
+```
+
+**Note:** Quick Links section intentionally removed per user request.
+
+#### 4. Production Deployment with Waitress
+**Changes:**
+- Migrated from Django development server to Waitress (production WSGI)
+- Collected static files to `staticfiles/` directory
+- WhiteNoiseMiddleware already configured for efficient static serving
+- Server now binds to 0.0.0.0:9001 (accessible from network)
+
+**Startup Command:**
+```bash
+python manage.py collectstatic --noinput
+python -m waitress --port=9001 --host=0.0.0.0 erp_project.wsgi:application
+```
+
+**Network Access:**
+- Local: http://localhost:9001
+- Network: http://172.16.2.3:9001
+
+**Why Waitress?**
+- Pure Python WSGI server (no C extensions needed)
+- Windows-compatible
+- Production-ready
+- Thread-safe and efficient
+
+---
+
 ## 1. Project Setup
 
 ### 1.1 Initial Project Creation

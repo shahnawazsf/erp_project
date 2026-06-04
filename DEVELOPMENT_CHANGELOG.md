@@ -168,11 +168,125 @@ Rebranded the login page to reflect the Reporting Tool focus and simplified the 
 
 ---
 
+---
+
+## June 4, 2026
+
+### 1. Phase 1 Header & Footer Features Implementation
+
+#### Features Added
+
+**Global Search Bar**
+- Location: Topbar left section
+- Functionality:
+  - 320px search input with debounced search (300ms)
+  - Mock search results showing reports, dashboard, report center
+  - Autocomplete-style results dropdown
+  - Click result to navigate directly
+  - Auto-closes when clicking outside
+- Implementation: JavaScript-based with mock data
+- Future: Can connect to real search backend API
+
+**Settings Dropdown**
+- Location: Topbar right section (gear icon)
+- Menu items:
+  - Date Format selector (DD/MM/YYYY)
+  - Theme selector (Light Mode)
+  - Timezone selector (UTC)
+  - Help & Documentation link
+- Functionality: Toggle open/close on click, auto-close on click outside
+- Future: Add actual settings storage and preferences
+
+**Footer with Copyright**
+- Location: Bottom of authenticated pages
+- Content: Copyright notice only ("© 2026 SDES Reporting Tool. All rights reserved.")
+- Styling: Minimal, centered, using WhiteNoiseMiddleware for static serving
+- Note: Quick Links section removed per user request
+
+#### Files Modified
+- `templates/base.html`:
+  - Added CSS for search bar (lines 84-117)
+  - Added CSS for settings dropdown (lines 119-156)
+  - Added CSS for footer (lines 158-194)
+  - Added HTML for global search (lines 359-365)
+  - Added HTML for settings dropdown (lines 368-385)
+  - Added HTML for footer (lines 429-434)
+  - Added JavaScript for search functionality (lines 497-538)
+  - Added JavaScript for settings dropdown (lines 540-565)
+  - Updated flex layout for footer positioning
+
+#### Technical Details
+- **Search Debouncing**: 300ms delay prevents excessive function calls
+- **Dropdown Toggle**: Uses `classList.add('show')` / `classList.remove('show')` for visibility
+- **CSS Positioning**: Footer uses flex layout to push content up, footer to bottom
+- **Mock Results**: Currently hardcoded; ready to connect to actual search API
+- **Responsive**: All features work on mobile via Bootstrap media queries
+
+#### Testing Checklist
+- [x] Global search input appears in topbar
+- [x] Search dropdown shows on typing
+- [x] Results are clickable and navigate correctly
+- [x] Search auto-closes when clicking outside
+- [x] Settings gear icon visible in topbar
+- [x] Settings menu toggles on click
+- [x] Settings menu closes on outside click
+- [x] Footer appears at bottom of all pages
+- [x] Copyright text is centered and readable
+- [x] All features work on network access (172.16.2.3:9001)
+
+---
+
+### 2. Production Deployment with Waitress
+
+#### Changes Made
+
+**Server Migration**
+- Moved from Django development server → **Waitress** (production WSGI)
+- Static files collected to `staticfiles/` directory
+- WhiteNoiseMiddleware already configured for efficient static serving
+- Application now accessible on all network interfaces (0.0.0.0:9001)
+
+#### Deployment Configuration
+- **WSGI Server**: Waitress 3.0.2 (pure Python, Windows-compatible)
+- **Port**: 9001 (both localhost and network)
+- **Host Binding**: 0.0.0.0 (all interfaces)
+- **Static Files**: Collected and cached
+- **DEBUG**: True (local development, can change to False for production)
+
+#### Startup Commands
+
+**Using Waitress:**
+```bash
+python -m waitress --port=9001 --host=0.0.0.0 erp_project.wsgi:application
+```
+
+**Collect Static Files:**
+```bash
+python manage.py collectstatic --noinput
+```
+
+#### Network Access
+- **Local**: http://localhost:9001
+- **Network**: http://172.16.2.3:9001
+- Works from any device on the same network
+
+#### Performance Notes
+- WhiteNoiseMiddleware serves static files efficiently
+- Waitress is production-ready and thread-safe
+- No need for separate web server (nginx/Apache) for local deployment
+
+---
+
 ## Future Improvements
 
+- Connect global search to real backend API (search invoices, reports by name/number)
+- Implement persistent user settings storage (date format, timezone, theme preference)
+- Add Phase 2 features: Notifications bell, Recent reports dropdown
+- Implement feedback widget for user feedback collection
+- Add real-time system status indicator
 - Consider caching agent list from AGENT_MASTER for faster dropdown loading
 - Implement export functionality for invoice reports (Excel/PDF already in template)
 - Add date range presets (Today, This Week, This Month, Last 30 Days)
 - Performance optimization for large date ranges
-- Consider moving to production WSGI server (Waitress/Gunicorn)
+- Set up proper production environment with DEBUG=False and specific ALLOWED_HOSTS
 

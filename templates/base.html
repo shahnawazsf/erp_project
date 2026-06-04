@@ -78,28 +78,160 @@
             position: sticky; top: 0; z-index: 99;
             display: flex; align-items: center; justify-content: space-between;
         }
-        .topbar-left { display: flex; align-items: center; gap: 0.75rem; }
+        .topbar-left { display: flex; align-items: center; gap: 1rem; }
         .topbar-right { display: flex; align-items: center; gap: 0.5rem; }
 
-        .user-avatar {
-            width: 34px; height: 34px; border-radius: 50%;
-            background: linear-gradient(135deg, #1a2e52, #4fc3f7);
-            color: #fff; font-weight: 700; font-size: 0.8rem;
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
+        /* ── Global Search Bar ── */
+        .search-container {
+            position: relative;
+            width: 320px;
         }
-        .topbar-divider { width: 1px; height: 22px; background: #e9ecef; margin: 0 0.25rem; }
-        .topbar-icon-btn {
-            width: 34px; height: 34px; border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-            color: #6c757d; text-decoration: none; font-size: 1.05rem;
-            transition: all 0.15s; border: none; background: transparent;
+        .search-box {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            background: #f8f9fa;
+            border: 1.5px solid #e9ecef;
+            border-radius: 8px;
+            transition: all 0.2s;
         }
-        .topbar-icon-btn:hover { background: #f0f2f5; color: #1a2035; }
-        .topbar-icon-btn.logout:hover { background: #fff0f0; color: #dc3545; }
+        .search-box:focus-within {
+            border-color: #4fc3f7;
+            box-shadow: 0 0 0 3px rgba(79, 195, 247, 0.1);
+            background: #fff;
+        }
+        .search-box i { color: #adb5bd; font-size: 0.9rem; }
+        .search-box input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            outline: none;
+            font-size: 0.85rem;
+            color: #1a2035;
+        }
+        .search-box input::placeholder { color: #adb5bd; }
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border: 1.5px solid #e9ecef;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 320px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        .search-results.show { display: block; }
+        .search-result-item {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #f0f2f5;
+            cursor: pointer;
+            transition: background 0.15s;
+            font-size: 0.875rem;
+        }
+        .search-result-item:last-child { border-bottom: none; }
+        .search-result-item:hover { background: #f8f9fa; }
+        .search-result-item .result-title { color: #1a2035; font-weight: 500; }
+        .search-result-item .result-meta { color: #8a97a8; font-size: 0.75rem; margin-top: 0.25rem; }
 
-        /* ── Content ── */
-        .content-area { padding: 1.5rem; }
+        /* ── Settings Dropdown ── */
+        .settings-dropdown {
+            position: relative;
+        }
+        .settings-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: #fff;
+            border: 1.5px solid #e9ecef;
+            border-radius: 8px;
+            min-width: 220px;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            margin-top: 0.5rem;
+        }
+        .settings-menu.show { display: block; }
+        .settings-menu-item {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #f0f2f5;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #1a2035;
+            font-size: 0.875rem;
+            transition: background 0.15s;
+            text-decoration: none;
+            text-align: left;
+            width: 100%;
+            border: none;
+            background: transparent;
+        }
+        .settings-menu-item:last-child { border-bottom: none; }
+        .settings-menu-item:hover { background: #f8f9fa; }
+        .settings-menu-item i { font-size: 1rem; color: #6c757d; }
+        .settings-menu-divider {
+            height: 1px;
+            background: #f0f2f5;
+            margin: 0.5rem 0;
+        }
+
+        /* ── Footer ── */
+        .main-footer {
+            border-top: 1px solid #e9ecef;
+            background: #fff;
+            padding: 2rem 1.5rem;
+            margin-top: auto;
+        }
+        .footer-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+        }
+        .footer-column h5 {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #1a2035;
+            margin-bottom: 0.75rem;
+        }
+        .footer-column ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .footer-column li {
+            margin-bottom: 0.5rem;
+        }
+        .footer-column a {
+            color: #6c757d;
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: color 0.15s;
+        }
+        .footer-column a:hover { color: #4fc3f7; }
+        .footer-column p {
+            color: #6c757d;
+            font-size: 0.875rem;
+            margin: 0.25rem 0;
+        }
+        .footer-copyright {
+            text-align: center;
+            padding-top: 1.5rem;
+            border-top: 1px solid #f0f2f5;
+            margin-top: 1.5rem;
+            color: #adb5bd;
+            font-size: 0.8rem;
+        }
+
+        /* ── Adjust main-content to include footer ── */
+        .main-content { display: flex; flex-direction: column; min-height: 100vh; position: relative; }
+        .content-area { flex: 1; padding: 1.5rem; }
         .card { border: none; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.07); }
         .stat-card { border-radius: 12px; color: #fff; padding: 1.25rem; }
         .stat-card .stat-icon { font-size: 2.5rem; opacity: 0.8; }
@@ -113,9 +245,6 @@
         .page-header h4 { font-weight: 700; color: #1a2035; }
 
         /* ── Page loader ── */
-        .main-content {
-            position: relative;
-        }
         #pageLoader {
             position: absolute;
             top: 58px;
@@ -216,6 +345,16 @@
     <!-- Topbar -->
     <div class="topbar">
         <div class="topbar-left">
+            <!-- Global Search Bar -->
+            <div class="search-container">
+                <div class="search-box">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="globalSearch" placeholder="Search reports, invoices...">
+                </div>
+                <div class="search-results" id="searchResults"></div>
+            </div>
+
+            <!-- User info -->
             <div class="user-avatar">
                 {{ user.get_full_name|slice:":1"|upper|default:user.username|slice:":1"|upper }}
             </div>
@@ -238,6 +377,32 @@
         </div>
 
         <div class="topbar-right">
+            <!-- Settings Dropdown -->
+            <div class="settings-dropdown">
+                <button class="topbar-icon-btn" id="settingsBtn" title="Settings">
+                    <i class="bi bi-gear"></i>
+                </button>
+                <div class="settings-menu" id="settingsMenu">
+                    <div class="settings-menu-item" data-setting="date-format">
+                        <i class="bi bi-calendar3"></i>
+                        <span>Date Format: DD/MM/YYYY</span>
+                    </div>
+                    <div class="settings-menu-item" data-setting="theme">
+                        <i class="bi bi-moon"></i>
+                        <span>Light Mode</span>
+                    </div>
+                    <div class="settings-menu-item" data-setting="timezone">
+                        <i class="bi bi-globe"></i>
+                        <span>Timezone: UTC</span>
+                    </div>
+                    <div class="settings-menu-divider"></div>
+                    <a href="#" class="settings-menu-item" onclick="alert('Documentation coming soon')">
+                        <i class="bi bi-question-circle"></i>
+                        <span>Help & Documentation</span>
+                    </a>
+                </div>
+            </div>
+
             <div class="topbar-divider"></div>
             <a href="{% url 'logout' %}" class="topbar-icon-btn logout" title="Sign out">
                 <i class="bi bi-box-arrow-right"></i>
@@ -260,6 +425,13 @@
     <div class="content-area pt-2">
         {% block content %}{% endblock %}
     </div>
+
+    <!-- ── Footer with Copyright ── -->
+    <footer class="main-footer">
+        <div class="footer-copyright">
+            &copy; {% now "Y" %} SDES Reporting Tool. All rights reserved.
+        </div>
+    </footer>
 
     <!-- ── Page loader (inside main-content) ── -->
     <div id="pageLoader" class="hidden">
@@ -291,8 +463,8 @@
 </div>
 <script>
 (function () {
-    var TIMEOUT    = 600;   /* 10 min total */
-    var WARN_AT    = 540;   /* show warning at 9 min */
+    var TIMEOUT    = 1200;   /* 20 min total */
+    var WARN_AT    = 1140;   /* show warning at 19 min */
     var lastActive = Date.now();
     var modal, bsModal;
 
@@ -331,6 +503,91 @@
 {% endif %}
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+/* Global Search Bar */
+(function () {
+    var searchInput = document.getElementById('globalSearch');
+    var searchResults = document.getElementById('searchResults');
+    var debounceTimer;
+
+    if (!searchInput) return;
+
+    searchInput.addEventListener('input', function () {
+        clearTimeout(debounceTimer);
+        var query = this.value.trim();
+
+        if (!query) {
+            searchResults.classList.remove('show');
+            return;
+        }
+
+        debounceTimer = setTimeout(function () {
+            performSearch(query);
+        }, 300);
+    });
+
+    function performSearch(query) {
+        var mockResults = [
+            { title: 'Customer Invoice Report', meta: 'Finance Reports', url: '{% url "report_customer_invoice" %}' },
+            { title: 'VAT Report', meta: 'Finance Reports', url: '{% url "report_vat" %}' },
+            { title: 'Dashboard', meta: 'Main', url: '{% url "dashboard" %}' },
+            { title: 'Report Center', meta: 'Finance Reports', url: '{% url "finance_reports" %}' }
+        ];
+
+        var filtered = mockResults.filter(function (item) {
+            return item.title.toLowerCase().includes(query.toLowerCase()) ||
+                   item.meta.toLowerCase().includes(query.toLowerCase());
+        });
+
+        if (filtered.length === 0) {
+            searchResults.innerHTML = '<div class="search-result-item" style="text-align:center;color:#adb5bd;">No results found</div>';
+        } else {
+            searchResults.innerHTML = filtered.map(function (item) {
+                return '<a href="' + item.url + '" class="search-result-item">' +
+                       '<div class="result-title">' + item.title + '</div>' +
+                       '<div class="result-meta">' + item.meta + '</div>' +
+                       '</a>';
+            }).join('');
+        }
+
+        searchResults.classList.add('show');
+    }
+
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.search-container')) {
+            searchResults.classList.remove('show');
+        }
+    });
+})();
+
+/* Settings Dropdown */
+(function () {
+    var settingsBtn = document.getElementById('settingsBtn');
+    var settingsMenu = document.getElementById('settingsMenu');
+
+    if (!settingsBtn) return;
+
+    settingsBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        settingsMenu.classList.toggle('show');
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.settings-dropdown')) {
+            settingsMenu.classList.remove('show');
+        }
+    });
+
+    var settingsItems = document.querySelectorAll('[data-setting]');
+    settingsItems.forEach(function (item) {
+        item.addEventListener('click', function () {
+            var setting = this.getAttribute('data-setting');
+            console.log('Setting clicked:', setting);
+            /* Future: Add actual settings functionality */
+        });
+    });
+})();
+</script>
 <script>
 (function () {
     var loader = document.getElementById('pageLoader');
