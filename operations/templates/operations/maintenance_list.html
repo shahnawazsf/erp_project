@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Maintenance{% endblock %}
+{% block content %}
+
+<div class="container-fluid py-4">
+    <h4 class="mb-4">Maintenance Records</h4>
+
+    <div class="card">
+        <div class="card-header">
+            <h6 class="mb-0">All Maintenance</h6>
+        </div>
+        <div class="card-body">
+            {% if maintenance %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Equipment</th>
+                                <th>Type</th>
+                                <th>Scheduled Date</th>
+                                <th>Status</th>
+                                <th>Cost</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for m in maintenance %}
+                                <tr>
+                                    <td>{{ m.id }}</td>
+                                    <td>{{ m.equipment_name }}</td>
+                                    <td><span class="badge bg-info">{{ m.get_maintenance_type_display }}</span></td>
+                                    <td>{{ m.scheduled_date|date:"Y-m-d" }}</td>
+                                    <td><span class="badge bg-secondary">{{ m.status }}</span></td>
+                                    <td>{{ m.cost }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted">No maintenance records found.</p>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

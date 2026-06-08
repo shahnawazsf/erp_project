@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'finance',
     'sales',
     'purchasing',
+    'operations',
 ]
 
 MIDDLEWARE = [
@@ -143,7 +144,7 @@ SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_HTTPONLY = False       # Must be False so JS can read it for forms
 CSRF_COOKIE_SECURE = False         # Set to True in production with HTTPS
 CSRF_COOKIE_SAMESITE = 'Lax'
-CSRF_TRUSTED_ORIGINS = ['http://localhost:9001', 'http://127.0.0.1:9001']
+CSRF_TRUSTED_ORIGINS = ['http://localhost:9001', 'http://127.0.0.1:9001', 'http://172.16.2.3:9001']
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap5'
 CRISPY_TEMPLATE_PACK = 'bootstrap5'
