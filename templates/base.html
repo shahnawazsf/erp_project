@@ -342,14 +342,6 @@
            class="nav-link {% if request.resolver_match.app_name == 'operations' %}active{% endif %}">
             <i class="bi bi-tools"></i> Operations Dashboard
         </a>
-        <a href="{% url 'operations:work_orders_list' %}"
-           class="nav-link {% if request.resolver_match.url_name == 'work_orders_list' %}active{% endif %}">
-            <i class="bi bi-list-check"></i> Work Orders
-        </a>
-        <a href="{% url 'operations:maintenance_list' %}"
-           class="nav-link {% if request.resolver_match.url_name == 'maintenance_list' %}active{% endif %}">
-            <i class="bi bi-wrench"></i> Maintenance
-        </a>
     </div>
 </div>
 

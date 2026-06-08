@@ -1,6 +1,7 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum
+from django.urls import reverse
 
 
 def _safe(default, fn, *args, **kwargs):
@@ -13,6 +14,11 @@ def _safe(default, fn, *args, **kwargs):
 
 @login_required
 def dashboard(request):
+    return redirect('operations:dashboard')
+
+
+@login_required
+def core_dashboard(request):
     from hr.models import Employee, LeaveRequest
     from inventory.models import Product
     from sales.models import SalesOrder, Customer
