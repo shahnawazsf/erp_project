@@ -336,6 +336,20 @@
            class="nav-link {% if request.resolver_match.url_name == 'report_customer_invoice' %}active{% endif %}">
             <i class="bi bi-file-earmark-text"></i> Customer Invoice
         </a>
+
+        <div class="nav-section">Operations</div>
+        <a href="{% url 'operations:dashboard' %}"
+           class="nav-link {% if request.resolver_match.app_name == 'operations' %}active{% endif %}">
+            <i class="bi bi-tools"></i> Operations Dashboard
+        </a>
+        <a href="{% url 'operations:work_orders_list' %}"
+           class="nav-link {% if request.resolver_match.url_name == 'work_orders_list' %}active{% endif %}">
+            <i class="bi bi-list-check"></i> Work Orders
+        </a>
+        <a href="{% url 'operations:maintenance_list' %}"
+           class="nav-link {% if request.resolver_match.url_name == 'maintenance_list' %}active{% endif %}">
+            <i class="bi bi-wrench"></i> Maintenance
+        </a>
     </div>
 </div>
 
@@ -531,7 +545,10 @@
             { title: 'Customer Invoice Report', meta: 'Finance Reports', url: '{% url "report_customer_invoice" %}' },
             { title: 'VAT Report', meta: 'Finance Reports', url: '{% url "report_vat" %}' },
             { title: 'Dashboard', meta: 'Main', url: '{% url "dashboard" %}' },
-            { title: 'Report Center', meta: 'Finance Reports', url: '{% url "finance_reports" %}' }
+            { title: 'Report Center', meta: 'Finance Reports', url: '{% url "finance_reports" %}' },
+            { title: 'Operations Dashboard', meta: 'Operations', url: '{% url "operations:dashboard" %}' },
+            { title: 'Work Orders', meta: 'Operations', url: '{% url "operations:work_orders_list" %}' },
+            { title: 'Maintenance', meta: 'Operations', url: '{% url "operations:maintenance_list" %}' }
         ];
 
         var filtered = mockResults.filter(function (item) {
