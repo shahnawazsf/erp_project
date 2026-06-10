@@ -20,7 +20,7 @@ def get_container_daily_summary():
     query = """
         SELECT ACTION_DATE, ACTION_DAY, RECVD_QTY, SHIPPED_QTY
         FROM TABLE (GET_RECVD_SHIPPED_DATE_LIST)
-        ORDER BY ACTION_DATE DESC
+        ORDER BY ACTION_DATE ASC
     """
 
     try:
@@ -63,9 +63,9 @@ def get_container_chart_data():
     for item in data:
         try:
             # ACTION_DAY is CHAR(2), so it's already the day of month
-            day = str(item['ACTION_DAY']).strip()
+            day = int(str(item['ACTION_DAY']).strip())
 
-            labels.append(f"Day {day}")
+            labels.append(str(day))
             recvd_data.append(int(item['RECVD_QTY']) if item['RECVD_QTY'] else 0)
             shipped_data.append(int(item['SHIPPED_QTY']) if item['SHIPPED_QTY'] else 0)
 
@@ -74,7 +74,7 @@ def get_container_chart_data():
             print(f"DEBUG: Error processing item {item}: {str(e)}")
             continue
 
-    print(f"DEBUG: Chart data prepared - {len(labels)} days")
+    print(f"DEBUG: Chart data prepared - {len(labels)} days with labels: {labels}")
     return json.dumps({
         'labels': labels,
         'recvd_data': recvd_data,

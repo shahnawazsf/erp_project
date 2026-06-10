@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const chart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: chartData.labels.map(day => 'Day ' + day),
+            labels: chartData.labels,
             datasets: [
                 {
                     label: 'Received',
