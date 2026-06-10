@@ -5,7 +5,7 @@
 <div class="container-fluid py-4">
     <h4 class="mb-4">Operations Dashboard</h4>
 
-    <!-- Card 1: Container Received & Shipped Line Chart -->
+    <!-- Card 1: Container Received & Shipped Dynamic Line Chart -->
     <div class="row mb-4">
         <div class="col-md-12 mb-3">
             <div class="card">
@@ -13,21 +13,21 @@
                     <h6 class="mb-0">📦 Containers Received & Shipped For {% now "F Y" %}</h6>
                 </div>
                 <div class="card-body">
-                    <canvas id="containerChart" height="80"></canvas>
+                    <div id="containerLineChart"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Card 2: Container Received by Year Bar Chart -->
+    <!-- Card 2: Container Received by Year 3D Bar Chart -->
     <div class="row mb-4">
         <div class="col-md-12 mb-3">
             <div class="card">
                 <div class="card-header bg-light">
-                    <h6 class="mb-0">📊 Containers Received by Year (Last 3 Years)</h6>
+                    <h6 class="mb-0">📊 Containers Received by Year (3D Dynamic View)</h6>
                 </div>
                 <div class="card-body">
-                    <canvas id="containerYearChart" height="80"></canvas>
+                    <div id="containerYearBarChart"></div>
                 </div>
             </div>
         </div>
@@ -37,234 +37,277 @@
 
 </div>
 
-<!-- Include Chart.js Library -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- ApexCharts Library - Modern, Dynamic, 3D Capable -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@latest/dist/apexcharts.min.js"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Parse data from Django context
-    const chartDataJson = '{{ container_chart_data|safe }}';
-    const chartData = JSON.parse(chartDataJson);
 
-    // Get canvas element
-    const ctx = document.getElementById('containerChart');
+    // ==========================================
+    // CHART 1: Dynamic Line Chart
+    // ==========================================
+    const lineChartDataJson = '{{ container_chart_data|safe }}';
+    const lineChartData = JSON.parse(lineChartDataJson);
 
-    if (!ctx) return;
-
-    // Create line chart with professional styling
-    const chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: chartData.labels,
-            datasets: [
+    if (lineChartData.labels && lineChartData.labels.length > 0) {
+        const lineChartOptions = {
+            series: [
                 {
-                    label: 'Received',
-                    data: chartData.recvd_data,
-                    borderColor: '#27a745', // Green
-                    backgroundColor: 'rgba(39, 167, 69, 0.1)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 5,
-                    pointBackgroundColor: '#27a745',
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2,
-                    pointHoverRadius: 7,
-                    pointHoverBackgroundColor: '#20c997',
+                    name: 'Received',
+                    data: lineChartData.recvd_data,
+                    color: '#27a745'
                 },
                 {
-                    label: 'Shipped',
-                    data: chartData.shipped_data,
-                    borderColor: '#007bff', // Blue
-                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 5,
-                    pointBackgroundColor: '#007bff',
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2,
-                    pointHoverRadius: 7,
-                    pointHoverBackgroundColor: '#0056b3',
+                    name: 'Shipped',
+                    data: lineChartData.shipped_data,
+                    color: '#007bff'
                 }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top',
-                    labels: {
-                        font: {
-                            size: 13,
-                            weight: 'bold'
-                        },
-                        padding: 20,
-                        usePointStyle: true,
-                        pointStyle: 'circle',
-                        color: '#1a2035'
+            ],
+            chart: {
+                type: 'line',
+                height: 400,
+                toolbar: {
+                    show: true,
+                    tools: {
+                        download: true,
+                        selection: true,
+                        zoom: true,
+                        zoomin: true,
+                        zoomout: true,
+                        pan: true,
+                        reset: true
                     }
                 },
-                tooltip: {
-                    backgroundColor: 'rgba(26, 32, 53, 0.8)',
-                    padding: 12,
-                    titleFont: { size: 13, weight: 'bold' },
-                    bodyFont: { size: 12 },
-                    borderColor: '#e9ecef',
-                    borderWidth: 1,
-                    displayColors: true,
-                    callbacks: {
-                        label: function(context) {
-                            return context.dataset.label + ': ' + context.parsed.y + ' containers';
-                        }
+                zoom: {
+                    enabled: true,
+                    type: 'xy'
+                },
+                animations: {
+                    enabled: true,
+                    speed: 800,
+                    animateGradually: {
+                        enabled: true,
+                        delay: 150
+                    },
+                    dynamicAnimation: {
+                        enabled: true,
+                        speed: 150
                     }
                 }
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        font: { size: 11 },
-                        color: '#6c757d',
-                        callback: function(value) {
-                            return value;
-                        }
-                    },
-                    title: {
-                        display: true,
-                        text: 'Count',
-                        font: { size: 12, weight: 'bold' },
+            stroke: {
+                curve: 'smooth',
+                width: 3,
+                lineCap: 'round'
+            },
+            markers: {
+                size: 6,
+                colors: ['#27a745', '#007bff'],
+                strokeWidth: 2,
+                strokeColors: ['#fff', '#fff'],
+                hover: {
+                    size: 8
+                }
+            },
+            xaxis: {
+                categories: lineChartData.labels,
+                title: {
+                    text: 'Day of Month',
+                    style: {
+                        fontSize: '12px',
+                        fontWeight: 'bold',
                         color: '#1a2035'
-                    },
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.05)',
-                        drawBorder: false
                     }
                 },
+                axisBorder: {
+                    show: true,
+                    color: '#e9ecef'
+                },
+                grid: {
+                    show: false
+                }
+            },
+            yaxis: {
+                title: {
+                    text: 'Count',
+                    style: {
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                        color: '#1a2035'
+                    }
+                },
+                axisBorder: {
+                    show: true
+                }
+            },
+            grid: {
+                borderColor: '#e9ecef',
+                strokeDashArray: 0,
+                xaxis: {
+                    lines: {
+                        show: true
+                    }
+                }
+            },
+            tooltip: {
+                theme: 'dark',
                 x: {
-                    ticks: {
-                        font: { size: 11 },
-                        color: '#6c757d'
-                    },
-                    title: {
-                        display: true,
-                        text: 'Day of Month',
-                        font: { size: 12, weight: 'bold' },
-                        color: '#1a2035'
-                    },
-                    grid: {
-                        display: false,
-                        drawBorder: false
-                    }
-                }
-            }
-        }
-    });
-
-    // Chart 2: Yearly Container Bar Chart
-    const yearChartDataJson = '{{ container_year_chart_data|safe }}';
-    const yearChartData = JSON.parse(yearChartDataJson);
-    const ctxYear = document.getElementById('containerYearChart');
-
-    if (ctxYear) {
-        new Chart(ctxYear, {
-            type: 'bar',
-            data: {
-                labels: yearChartData.labels,
-                datasets: [{
-                    label: 'Containers Received',
-                    data: yearChartData.qty_data,
-                    backgroundColor: [
-                        'rgba(79, 195, 247, 0.8)',
-                        'rgba(39, 167, 69, 0.8)',
-                        'rgba(255, 193, 7, 0.8)'
-                    ],
-                    borderColor: [
-                        '#007bff',
-                        '#27a745',
-                        '#ffc107'
-                    ],
-                    borderWidth: 2,
-                    borderRadius: 5,
-                    hoverBackgroundColor: [
-                        'rgba(79, 195, 247, 1)',
-                        'rgba(39, 167, 69, 1)',
-                        'rgba(255, 193, 7, 1)'
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                indexAxis: 'x',
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top',
-                        labels: {
-                            font: { size: 13, weight: 'bold' },
-                            padding: 20,
-                            color: '#1a2035'
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(26, 32, 53, 0.8)',
-                        padding: 12,
-                        titleFont: { size: 13, weight: 'bold' },
-                        bodyFont: { size: 12 },
-                        borderColor: '#e9ecef',
-                        borderWidth: 1,
-                        displayColors: true,
-                        callbacks: {
-                            label: function(context) {
-                                return context.dataset.label + ': ' +
-                                       context.parsed.y.toLocaleString() + ' containers';
-                            }
-                        }
+                    formatter: function(value) {
+                        return 'Day ' + value;
                     }
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            font: { size: 11 },
-                            color: '#6c757d',
-                            callback: function(value) {
-                                return value.toLocaleString();
-                            }
-                        },
-                        title: {
-                            display: true,
-                            text: 'Quantity',
-                            font: { size: 12, weight: 'bold' },
-                            color: '#1a2035'
-                        },
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.05)',
-                            drawBorder: false
-                        }
-                    },
-                    x: {
-                        ticks: {
-                            font: { size: 11 },
-                            color: '#6c757d'
-                        },
-                        title: {
-                            display: true,
-                            text: 'Year',
-                            font: { size: 12, weight: 'bold' },
-                            color: '#1a2035'
-                        },
-                        grid: {
-                            display: false,
-                            drawBorder: false
-                        }
+                y: {
+                    formatter: function(value) {
+                        return value + ' containers';
                     }
                 }
+            },
+            legend: {
+                position: 'top',
+                horizontalAlign: 'right',
+                fontSize: 13,
+                fontFamily: 'Segoe UI',
+                markers: {
+                    width: 12,
+                    height: 12,
+                    radius: 2
+                }
             }
-        });
+        };
+
+        new ApexCharts(document.querySelector("#containerLineChart"), lineChartOptions).render();
+    }
+
+    // ==========================================
+    // CHART 2: 3D Dynamic Bar Chart
+    // ==========================================
+    const barChartDataJson = '{{ container_year_chart_data|safe }}';
+    const barChartData = JSON.parse(barChartDataJson);
+
+    if (barChartData.labels && barChartData.labels.length > 0) {
+        const barChartOptions = {
+            series: [
+                {
+                    name: 'Containers Received',
+                    data: barChartData.qty_data
+                }
+            ],
+            chart: {
+                type: 'bar',
+                height: 400,
+                toolbar: {
+                    show: true,
+                    tools: {
+                        download: true,
+                        selection: true,
+                        zoom: true,
+                        zoomin: true,
+                        zoomout: true,
+                        pan: true,
+                        reset: true
+                    }
+                },
+                animations: {
+                    enabled: true,
+                    speed: 1000,
+                    animateGradually: {
+                        enabled: true,
+                        delay: 150
+                    },
+                    dynamicAnimation: {
+                        enabled: true,
+                        speed: 150
+                    }
+                }
+            },
+            plotOptions: {
+                bar: {
+                    horizontal: false,
+                    columnWidth: '60%',
+                    borderRadius: 5,
+                    dataLabels: {
+                        position: 'top'
+                    },
+                    // 3D Effect
+                    distributed: true,
+                    borderRadiusApplication: 'end'
+                }
+            },
+            dataLabels: {
+                enabled: true,
+                offsetY: -20,
+                style: {
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    colors: ['#1a2035']
+                },
+                formatter: function(value) {
+                    return value.toLocaleString();
+                }
+            },
+            colors: [
+                '#4FC3F7',
+                '#27a745',
+                '#FFC107',
+                '#FF5722',
+                '#9C27B0'
+            ],
+            xaxis: {
+                categories: barChartData.labels,
+                title: {
+                    text: 'Year',
+                    style: {
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                        color: '#1a2035'
+                    }
+                },
+                axisBorder: {
+                    show: true,
+                    color: '#e9ecef'
+                }
+            },
+            yaxis: {
+                title: {
+                    text: 'Quantity',
+                    style: {
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                        color: '#1a2035'
+                    }
+                },
+                labels: {
+                    formatter: function(value) {
+                        return value.toLocaleString();
+                    }
+                }
+            },
+            grid: {
+                borderColor: '#e9ecef',
+                strokeDashArray: 0,
+                yaxis: {
+                    lines: {
+                        show: true
+                    }
+                }
+            },
+            tooltip: {
+                theme: 'dark',
+                y: {
+                    formatter: function(value) {
+                        return value.toLocaleString() + ' containers';
+                    }
+                }
+            },
+            legend: {
+                position: 'top',
+                horizontalAlign: 'right',
+                fontSize: 13,
+                fontFamily: 'Segoe UI'
+            }
+        };
+
+        new ApexCharts(document.querySelector("#containerYearBarChart"), barChartOptions).render();
     }
 });
 </script>
