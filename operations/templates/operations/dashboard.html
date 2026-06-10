@@ -5,97 +5,46 @@
 <div class="container-fluid py-4">
     <h4 class="mb-4">Operations Dashboard</h4>
 
-    <!-- Row 1: Key Metrics -->
-    <div class="row mb-4">
-        <div class="col-md-3 mb-3">
-            <div class="card border-left-primary h-100">
-                <div class="card-body">
-                    <h6 class="text-muted mb-2">Total Work Orders</h6>
-                    <h3 class="mb-0">{{ total_work_orders }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card border-left-success h-100">
-                <div class="card-body">
-                    <h6 class="text-muted mb-2">Active Work Orders</h6>
-                    <h3 class="mb-0">{{ active_work_orders }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card border-left-info h-100">
-                <div class="card-body">
-                    <h6 class="text-muted mb-2">Completed Work Orders</h6>
-                    <h3 class="mb-0">{{ completed_work_orders }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card border-left-warning h-100">
-                <div class="card-body">
-                    <h6 class="text-muted mb-2">Pending Maintenance</h6>
-                    <h3 class="mb-0">{{ pending_maintenance }}</h3>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Row 2: Additional Metrics -->
+    <!-- Card 1: Daily Container Activity -->
     <div class="row mb-4">
         <div class="col-md-12 mb-3">
-            <div class="card border-left-danger h-100">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">📦 Daily Container Activity</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="text-muted mb-2">Total Maintenance Cost</h6>
-                    <h3 class="mb-0">{{ total_maintenance_cost }}</h3>
+                    {% if container_daily_summary %}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th style="color: green; font-weight: bold;">📥 Received</th>
+                                        <th style="color: blue; font-weight: bold;">📤 Shipped</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in container_daily_summary %}
+                                    <tr>
+                                        <td><strong>{{ item.ACTION_DAY|date:"M d, Y" }}</strong></td>
+                                        <td><span class="badge bg-success">{{ item.Recvd }}</span></td>
+                                        <td><span class="badge bg-info">{{ item.Shipped }}</span></td>
+                                        <td><strong>{{ item.Recvd|add:item.Shipped }}</strong></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted small">No container data available</p>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Row 3: Recent Activity -->
-    <div class="row">
-        <div class="col-md-6 mb-3">
-            <div class="card">
-                <div class="card-header bg-light">
-                    <h6 class="mb-0">Recent Work Orders</h6>
-                </div>
-                <div class="card-body">
-                    {% if recent_work_orders %}
-                        <ul class="list-unstyled">
-                            {% for wo in recent_work_orders %}
-                                <li class="mb-2">
-                                    <small>{{ wo.id }} - <span class="badge bg-secondary">{{ wo.status }}</span></small>
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p class="text-muted small">No work orders yet</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 mb-3">
-            <div class="card">
-                <div class="card-header bg-light">
-                    <h6 class="mb-0">Recent Maintenance</h6>
-                </div>
-                <div class="card-body">
-                    {% if recent_maintenance %}
-                        <ul class="list-unstyled">
-                            {% for maint in recent_maintenance %}
-                                <li class="mb-2">
-                                    <small>{{ maint.equipment_name }} - {{ maint.maintenance_type }}</small>
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p class="text-muted small">No maintenance records yet</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Future Cards will be added here -->
 
 </div>
 

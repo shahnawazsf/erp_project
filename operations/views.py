@@ -12,16 +12,30 @@ def _safe(default, fn, *args, **kwargs):
         return default
 
 
+def get_container_daily_summary():
+    """Get container received and shipped by day"""
+    from django.db import connection
+
+    query = """
+        SELECT
+            ACTION_DAY,
+            RECVD_QTY as Recvd,
+            SHIPPED_QTY as Shipped
+        FROM YOUR_TABLE_NAME
+        ORDER BY ACTION_DAY DESC
+    """
+
+    with connection.cursor() as cursor:
+        cursor.execute(query)
+        columns = [col[0] for col in cursor.description]
+        return [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+
 @login_required
 def operations_dashboard(request):
     context = {
-        'total_work_orders': _safe(0, lambda: WorkOrder.objects.count()),
-        'active_work_orders': _safe(0, lambda: WorkOrder.objects.filter(status__in=['scheduled', 'in_progress']).count()),
-        'completed_work_orders': _safe(0, lambda: WorkOrder.objects.filter(status='completed').count()),
-        'pending_maintenance': _safe(0, lambda: Maintenance.objects.filter(completed_date__isnull=True).count()),
-        'total_maintenance_cost': _safe(0, lambda: Maintenance.objects.filter(completed_date__isnull=False).aggregate(total=Sum('cost'))['total'] or 0),
-        'recent_work_orders': _safe([], lambda: list(WorkOrder.objects.order_by('-created_at')[:5])),
-        'recent_maintenance': _safe([], lambda: list(Maintenance.objects.order_by('-created_date')[:5])),
+        # Card 1: Daily Container Activity
+        'container_daily_summary': _safe([], lambda: get_container_daily_summary()),
     }
     return render(request, 'operations/dashboard.html', context)
 
