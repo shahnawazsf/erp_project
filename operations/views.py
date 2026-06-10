@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum, Q
 from .models import WorkOrder, Maintenance, OperationalMetric
+from django.db import connection
 
 
 def _safe(default, fn, *args, **kwargs):
@@ -10,6 +11,75 @@ def _safe(default, fn, *args, **kwargs):
         return fn(*args, **kwargs)
     except Exception:
         return default
+def get_container_year_summary():
+    """Get Container received by year to date chart"""
+    import json
+
+    query ="""
+        SELECT TO_NUMBER(TO_CHAR(DATERECEIVED,'YYYY')) YEAR,TO_NUMBER(TO_CHAR(DATERECEIVED,'YYYY')) YEAR1,SUM(QTYRECEIVED) QTY
+        FROM RECEIPTDETAIL 
+        WHERE STORERKEY LIKE 'SDRS%' 
+        AND SKU LIKE 'CNT%' 
+        AND STATUS=9 
+        AND TO_NUMBER(TO_CHAR(DATERECEIVED,'YYYY'))>=TO_NUMBER(TO_CHAR(SYSDATE,'YYYY'))-2
+        AND TO_NUMBER(TO_CHAR(DATERECEIVED,'MMDD'))<=TO_NUMBER(TO_CHAR(SYSDATE-1,'MMDD')) 
+        GROUP BY TO_NUMBER(TO_CHAR(DATERECEIVED,'YYYY'))
+        ORDER BY TO_NUMBER(TO_CHAR(DATERECEIVED,'YYYY'))
+        
+    """
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(query)
+            columns = [col[0] for col in cursor.description]
+            data = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            print(f"DEBUG: Container data retrieved: {len(data)} records")
+            if data:
+                print(f"DEBUG: First record: {data[0]}")
+                print(f"DEBUG: Columns: {columns}")
+            return data
+    except Exception as e:
+        print(f"DEBUG: Error in get_container_year_summary: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return []
+
+
+def get_container_year_chart_data():
+    """Format yearly container data for bar chart"""
+    import json
+
+    data = get_container_year_summary()
+
+    if not data:
+        print("DEBUG: No data returned from get_container_year_summary()")
+        return json.dumps({
+            'labels': [],
+            'qty_data': []
+        })
+
+    # Extract year and quantity
+    labels = []
+    qty_data = []
+
+    for item in data:
+        try:
+            year = int(item['YEAR'])
+            qty = int(item['QTY']) if item['QTY'] else 0
+
+            labels.append(str(year))
+            qty_data.append(qty)
+
+            print(f"DEBUG: Added year data - Year: {year}, Qty: {qty}")
+        except Exception as e:
+            print(f"DEBUG: Error processing item {item}: {str(e)}")
+            continue
+
+    print(f"DEBUG: Chart data prepared - {len(labels)} years")
+    return json.dumps({
+        'labels': labels,
+        'qty_data': qty_data
+    })
+
 
 
 def get_container_daily_summary():
@@ -89,6 +159,8 @@ def operations_dashboard(request):
     context = {
         # Card 1: Container Received & Shipped Line Chart
         'container_chart_data': _safe('{}', lambda: get_container_chart_data()),
+        # Card 2: Container Received by Year Bar Chart
+        'container_year_chart_data': _safe('{}', lambda: get_container_year_chart_data()),
     }
     return render(request, 'operations/dashboard.html', context)
 

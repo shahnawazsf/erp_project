@@ -10,10 +10,24 @@
         <div class="col-md-12 mb-3">
             <div class="card">
                 <div class="card-header bg-light">
-                    <h6 class="mb-0">📦 Containers Received & Shipped For JUNE 2026</h6>
+                    <h6 class="mb-0">📦 Containers Received & Shipped For {% now "F Y" %}</h6>
                 </div>
                 <div class="card-body">
                     <canvas id="containerChart" height="80"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 2: Container Received by Year Bar Chart -->
+    <div class="row mb-4">
+        <div class="col-md-12 mb-3">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">📊 Containers Received by Year (Last 3 Years)</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="containerYearChart" height="80"></canvas>
                 </div>
             </div>
         </div>
@@ -148,6 +162,110 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+
+    // Chart 2: Yearly Container Bar Chart
+    const yearChartDataJson = '{{ container_year_chart_data|safe }}';
+    const yearChartData = JSON.parse(yearChartDataJson);
+    const ctxYear = document.getElementById('containerYearChart');
+
+    if (ctxYear) {
+        new Chart(ctxYear, {
+            type: 'bar',
+            data: {
+                labels: yearChartData.labels,
+                datasets: [{
+                    label: 'Containers Received',
+                    data: yearChartData.qty_data,
+                    backgroundColor: [
+                        'rgba(79, 195, 247, 0.8)',
+                        'rgba(39, 167, 69, 0.8)',
+                        'rgba(255, 193, 7, 0.8)'
+                    ],
+                    borderColor: [
+                        '#007bff',
+                        '#27a745',
+                        '#ffc107'
+                    ],
+                    borderWidth: 2,
+                    borderRadius: 5,
+                    hoverBackgroundColor: [
+                        'rgba(79, 195, 247, 1)',
+                        'rgba(39, 167, 69, 1)',
+                        'rgba(255, 193, 7, 1)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                indexAxis: 'x',
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            font: { size: 13, weight: 'bold' },
+                            padding: 20,
+                            color: '#1a2035'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(26, 32, 53, 0.8)',
+                        padding: 12,
+                        titleFont: { size: 13, weight: 'bold' },
+                        bodyFont: { size: 12 },
+                        borderColor: '#e9ecef',
+                        borderWidth: 1,
+                        displayColors: true,
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' +
+                                       context.parsed.y.toLocaleString() + ' containers';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            font: { size: 11 },
+                            color: '#6c757d',
+                            callback: function(value) {
+                                return value.toLocaleString();
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Quantity',
+                            font: { size: 12, weight: 'bold' },
+                            color: '#1a2035'
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            drawBorder: false
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: { size: 11 },
+                            color: '#6c757d'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Year',
+                            font: { size: 12, weight: 'bold' },
+                            color: '#1a2035'
+                        },
+                        grid: {
+                            display: false,
+                            drawBorder: false
+                        }
+                    }
+                }
+            }
+        });
+    }
 });
 </script>
 
