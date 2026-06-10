@@ -33,6 +33,20 @@
         </div>
     </div>
 
+    <!-- Card 3: Handling & Demurrage Charges Dynamic Line Chart -->
+    <div class="row mb-4">
+        <div class="col-md-12 mb-3">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">💰 Handling & Demurrage Charges For {% now "F Y" %}</h6>
+                </div>
+                <div class="card-body">
+                    <div id="handlingDemurrageChart"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Future Cards will be added here -->
 
 </div>
@@ -308,6 +322,152 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         new ApexCharts(document.querySelector("#containerYearBarChart"), barChartOptions).render();
+    }
+
+    // ==========================================
+    // CHART 3: Handling & Demurrage Charges Dynamic Line Chart
+    // ==========================================
+    const hiDemChartDataJson = '{{ handling_demurrage_chart_data|safe }}';
+    const hiDemChartData = JSON.parse(hiDemChartDataJson);
+
+    if (hiDemChartData.labels && hiDemChartData.labels.length > 0) {
+        const hiDemChartOptions = {
+            series: [
+                {
+                    name: 'Handling Charges',
+                    data: hiDemChartData.handling_data,
+                    color: '#FF6B6B'
+                },
+                {
+                    name: 'Demurrage Charges',
+                    data: hiDemChartData.demurrage_data,
+                    color: '#FFA500'
+                }
+            ],
+            chart: {
+                type: 'line',
+                height: 400,
+                toolbar: {
+                    show: true,
+                    tools: {
+                        download: true,
+                        selection: true,
+                        zoom: true,
+                        zoomin: true,
+                        zoomout: true,
+                        pan: true,
+                        reset: true
+                    }
+                },
+                zoom: {
+                    enabled: true,
+                    type: 'xy'
+                },
+                animations: {
+                    enabled: true,
+                    speed: 800,
+                    animateGradually: {
+                        enabled: true,
+                        delay: 150
+                    },
+                    dynamicAnimation: {
+                        enabled: true,
+                        speed: 150
+                    }
+                }
+            },
+            stroke: {
+                curve: 'smooth',
+                width: 3,
+                lineCap: 'round'
+            },
+            markers: {
+                size: 6,
+                colors: ['#FF6B6B', '#FFA500'],
+                strokeWidth: 2,
+                strokeColors: ['#fff', '#fff'],
+                hover: {
+                    size: 8
+                }
+            },
+            xaxis: {
+                categories: hiDemChartData.labels,
+                title: {
+                    text: 'Day of Month',
+                    style: {
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                        color: '#1a2035'
+                    }
+                },
+                axisBorder: {
+                    show: true,
+                    color: '#e9ecef'
+                },
+                grid: {
+                    show: false
+                }
+            },
+            yaxis: {
+                title: {
+                    text: 'Charges (Currency)',
+                    style: {
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                        color: '#1a2035'
+                    }
+                },
+                axisBorder: {
+                    show: true
+                },
+                labels: {
+                    formatter: function(value) {
+                        return '$' + value.toLocaleString('en-US', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
+                        });
+                    }
+                }
+            },
+            grid: {
+                borderColor: '#e9ecef',
+                strokeDashArray: 0,
+                xaxis: {
+                    lines: {
+                        show: true
+                    }
+                }
+            },
+            tooltip: {
+                theme: 'dark',
+                x: {
+                    formatter: function(value) {
+                        return 'Day ' + value;
+                    }
+                },
+                y: {
+                    formatter: function(value) {
+                        return '$' + value.toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        });
+                    }
+                }
+            },
+            legend: {
+                position: 'top',
+                horizontalAlign: 'right',
+                fontSize: 13,
+                fontFamily: 'Segoe UI',
+                markers: {
+                    width: 12,
+                    height: 12,
+                    radius: 2
+                }
+            }
+        };
+
+        new ApexCharts(document.querySelector("#handlingDemurrageChart"), hiDemChartOptions).render();
     }
 });
 </script>

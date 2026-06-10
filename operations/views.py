@@ -81,6 +81,74 @@ def get_container_year_chart_data():
     })
 
 
+def get_handling_demurrage_data():
+    """Get Handling & Demurrage charges by day"""
+    from django.db import connection
+
+    query = """
+        SELECT TRAN_DAY, HI_CHARGES as Handling, DEM_CHARGES as Dem
+        FROM TABLE (GET_HI_DEM_LIST)
+        ORDER BY TRAN_DAY ASC
+    """
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(query)
+            columns = [col[0] for col in cursor.description]
+            data = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            print(f"DEBUG: Handling & Demurrage data retrieved: {len(data)} records")
+            if data:
+                print(f"DEBUG: First record: {data[0]}")
+                print(f"DEBUG: Columns: {columns}")
+            return data
+    except Exception as e:
+        print(f"DEBUG: Error in get_handling_demurrage_data: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return []
+
+
+def get_handling_demurrage_chart_data():
+    """Format Handling & Demurrage data for dynamic line chart"""
+    import json
+
+    data = get_handling_demurrage_data()
+
+    if not data:
+        print("DEBUG: No data returned from get_handling_demurrage_data()")
+        return json.dumps({
+            'labels': [],
+            'handling_data': [],
+            'demurrage_data': []
+        })
+
+    # Extract day and charges
+    labels = []
+    handling_data = []
+    demurrage_data = []
+
+    for item in data:
+        try:
+            day = int(str(item['TRAN_DAY']).strip())
+            handling = float(item['Handling']) if item['Handling'] else 0
+            demurrage = float(item['Dem']) if item['Dem'] else 0
+
+            labels.append(str(day))
+            handling_data.append(round(handling, 2))
+            demurrage_data.append(round(demurrage, 2))
+
+            print(f"DEBUG: Added data - Day: {day}, Handling: {handling}, Demurrage: {demurrage}")
+        except Exception as e:
+            print(f"DEBUG: Error processing item {item}: {str(e)}")
+            continue
+
+    print(f"DEBUG: Chart data prepared - {len(labels)} days")
+    return json.dumps({
+        'labels': labels,
+        'handling_data': handling_data,
+        'demurrage_data': demurrage_data
+    })
+
 
 def get_container_daily_summary():
     """Get container received and shipped by day for chart"""
@@ -161,6 +229,8 @@ def operations_dashboard(request):
         'container_chart_data': _safe('{}', lambda: get_container_chart_data()),
         # Card 2: Container Received by Year Bar Chart
         'container_year_chart_data': _safe('{}', lambda: get_container_year_chart_data()),
+        # Card 3: Handling & Demurrage Charges Line Chart
+        'handling_demurrage_chart_data': _safe('{}', lambda: get_handling_demurrage_chart_data()),
     }
     return render(request, 'operations/dashboard.html', context)
 
