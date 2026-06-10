@@ -5,40 +5,15 @@
 <div class="container-fluid py-4">
     <h4 class="mb-4">Operations Dashboard</h4>
 
-    <!-- Card 1: Daily Container Activity -->
+    <!-- Card 1: Container Received & Shipped Line Chart -->
     <div class="row mb-4">
         <div class="col-md-12 mb-3">
             <div class="card">
                 <div class="card-header bg-light">
-                    <h6 class="mb-0">📦 Daily Container Activity</h6>
+                    <h6 class="mb-0">📦 Containers Received & Shipped For JUNE 2026</h6>
                 </div>
                 <div class="card-body">
-                    {% if container_daily_summary %}
-                        <div class="table-responsive">
-                            <table class="table table-sm table-hover">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Date</th>
-                                        <th style="color: green; font-weight: bold;">📥 Received</th>
-                                        <th style="color: blue; font-weight: bold;">📤 Shipped</th>
-                                        <th>Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for item in container_daily_summary %}
-                                    <tr>
-                                        <td><strong>{{ item.ACTION_DAY|date:"M d, Y" }}</strong></td>
-                                        <td><span class="badge bg-success">{{ item.Recvd }}</span></td>
-                                        <td><span class="badge bg-info">{{ item.Shipped }}</span></td>
-                                        <td><strong>{{ item.Recvd|add:item.Shipped }}</strong></td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% else %}
-                        <p class="text-muted small">No container data available</p>
-                    {% endif %}
+                    <canvas id="containerChart" height="80"></canvas>
                 </div>
             </div>
         </div>
@@ -47,5 +22,133 @@
     <!-- Future Cards will be added here -->
 
 </div>
+
+<!-- Include Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Parse data from Django context
+    const chartDataJson = '{{ container_chart_data|safe }}';
+    const chartData = JSON.parse(chartDataJson);
+
+    // Get canvas element
+    const ctx = document.getElementById('containerChart');
+
+    if (!ctx) return;
+
+    // Create line chart with professional styling
+    const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: chartData.labels.map(day => 'Day ' + day),
+            datasets: [
+                {
+                    label: 'Received',
+                    data: chartData.recvd_data,
+                    borderColor: '#27a745', // Green
+                    backgroundColor: 'rgba(39, 167, 69, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#27a745',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointHoverRadius: 7,
+                    pointHoverBackgroundColor: '#20c997',
+                },
+                {
+                    label: 'Shipped',
+                    data: chartData.shipped_data,
+                    borderColor: '#007bff', // Blue
+                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#007bff',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointHoverRadius: 7,
+                    pointHoverBackgroundColor: '#0056b3',
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        font: {
+                            size: 13,
+                            weight: 'bold'
+                        },
+                        padding: 20,
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        color: '#1a2035'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(26, 32, 53, 0.8)',
+                    padding: 12,
+                    titleFont: { size: 13, weight: 'bold' },
+                    bodyFont: { size: 12 },
+                    borderColor: '#e9ecef',
+                    borderWidth: 1,
+                    displayColors: true,
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.parsed.y + ' containers';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        font: { size: 11 },
+                        color: '#6c757d',
+                        callback: function(value) {
+                            return value;
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Count',
+                        font: { size: 12, weight: 'bold' },
+                        color: '#1a2035'
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)',
+                        drawBorder: false
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: { size: 11 },
+                        color: '#6c757d'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Day of Month',
+                        font: { size: 12, weight: 'bold' },
+                        color: '#1a2035'
+                    },
+                    grid: {
+                        display: false,
+                        drawBorder: false
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
 
 {% endblock %}
