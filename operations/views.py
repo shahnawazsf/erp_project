@@ -18,9 +18,9 @@ def get_container_daily_summary():
     import json
 
     query = """
-        SELECT ACTION_DAY, RECVD_QTY as Recvd, SHIPPED_QTY as Shipped
+        SELECT ACTION_DATE, ACTION_DAY, RECVD_QTY, SHIPPED_QTY
         FROM TABLE (GET_RECVD_SHIPPED_DATE_LIST)
-        ORDER BY ACTION_DAY
+        ORDER BY ACTION_DATE DESC
     """
 
     try:
@@ -28,8 +28,15 @@ def get_container_daily_summary():
             cursor.execute(query)
             columns = [col[0] for col in cursor.description]
             data = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            print(f"DEBUG: Container data retrieved: {len(data)} records")
+            if data:
+                print(f"DEBUG: First record: {data[0]}")
+                print(f"DEBUG: Columns: {columns}")
             return data
     except Exception as e:
+        print(f"DEBUG: Error in get_container_daily_summary: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return []
 
 
@@ -41,32 +48,33 @@ def get_container_chart_data():
     data = get_container_daily_summary()
 
     if not data:
+        print("DEBUG: No data returned from get_container_daily_summary()")
         return json.dumps({
             'labels': [],
             'recvd_data': [],
             'shipped_data': []
         })
 
-    # Extract day from ACTION_DAY and format as day number
+    # Extract day from ACTION_DATE and ACTION_DAY
     labels = []
     recvd_data = []
     shipped_data = []
 
     for item in data:
         try:
-            # Format date as "1", "2", "3", etc. (day of month)
-            if isinstance(item['ACTION_DAY'], str):
-                day = item['ACTION_DAY'].split('-')[2] if '-' in str(item['ACTION_DAY']) else str(item['ACTION_DAY'])
-                day = int(day)
-            else:
-                day = item['ACTION_DAY'].day
+            # ACTION_DAY is CHAR(2), so it's already the day of month
+            day = str(item['ACTION_DAY']).strip()
 
-            labels.append(str(day))
-            recvd_data.append(int(item['Recvd']) if item['Recvd'] else 0)
-            shipped_data.append(int(item['Shipped']) if item['Shipped'] else 0)
-        except:
+            labels.append(f"Day {day}")
+            recvd_data.append(int(item['RECVD_QTY']) if item['RECVD_QTY'] else 0)
+            shipped_data.append(int(item['SHIPPED_QTY']) if item['SHIPPED_QTY'] else 0)
+
+            print(f"DEBUG: Added data - Day: {day}, Recvd: {item['RECVD_QTY']}, Shipped: {item['SHIPPED_QTY']}")
+        except Exception as e:
+            print(f"DEBUG: Error processing item {item}: {str(e)}")
             continue
 
+    print(f"DEBUG: Chart data prepared - {len(labels)} days")
     return json.dumps({
         'labels': labels,
         'recvd_data': recvd_data,
