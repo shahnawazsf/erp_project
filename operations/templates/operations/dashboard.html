@@ -4,6 +4,46 @@
 
 <div class="container-fluid py-4">
     <h4 class="mb-4">Operations Dashboard</h4>
+    <h5 class="text-center text-secondary mb-4">Daily Activity Report {% now "d F Y" %}</h5>
+
+    <!-- Summary Cards Row -->
+    <div class="row mb-4">
+        <!-- Card: Last 24 Hours Container Summary -->
+        <div class="col-md-3 mb-3">
+            <div class="card bg-gradient border-0 shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0">📦 Last 24 Hours Containers</h6>
+                </div>
+                <div class="card-body">
+                    <div id="container24hrSummary"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card: Last 24 Hours H&D Summary -->
+        <div class="col-md-3 mb-3">
+            <div class="card bg-gradient border-0 shadow-sm">
+                <div class="card-header bg-warning text-white">
+                    <h6 class="mb-0">💰 Last 24 Hours Charges</h6>
+                </div>
+                <div class="card-body">
+                    <div id="hidem24hrSummary"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card: Month-to-Date Summary -->
+        <div class="col-md-6 mb-3">
+            <div class="card bg-gradient border-0 shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">📊 Month-to-Date Summary</h6>
+                </div>
+                <div class="card-body">
+                    <div id="mtdSummary"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Card 1: Container Received & Shipped Dynamic Line Chart -->
     <div class="row mb-4">
@@ -24,7 +64,7 @@
         <div class="col-md-12 mb-3">
             <div class="card">
                 <div class="card-header bg-light">
-                    <h6 class="mb-0">📊 Containers Received by Year (3D Dynamic View)</h6>
+                    <h6 class="mb-0">📊 Containers Received by Year Date</h6>
                 </div>
                 <div class="card-body">
                     <div id="containerYearBarChart"></div>
@@ -54,27 +94,151 @@
 <!-- ApexCharts Library - Modern, Dynamic, 3D Capable -->
 <script src="https://cdn.jsdelivr.net/npm/apexcharts@latest/dist/apexcharts.min.js"></script>
 
+<style>
+    /* ApexCharts Legend Text Styling */
+    .apexcharts-legend-text {
+        color: #1a2035 !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        display: inline-block !important;
+        margin-left: 8px !important;
+        cursor: pointer !important;
+    }
+
+    .apexcharts-legend-marker {
+        margin-right: 5px !important;
+    }
+</style>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+
+    // ==========================================
+    // SUMMARY CARDS: Last 24 Hours & Month-to-Date
+    // ==========================================
+
+    // Last 24 Hours Container Summary
+    const container24hrJson = '{{ last_24hr_container|safe }}';
+    const container24hrData = JSON.parse(container24hrJson);
+
+    if (container24hrData && container24hrData.received_24hr !== undefined) {
+        const html24hr = `
+            <div class="row g-2">
+                <div class="col-6">
+                    <div class="text-center p-3 bg-light rounded">
+                        <h6 class="text-muted mb-1">Received</h6>
+                        <h4 class="text-success mb-0">${container24hrData.received_24hr}</h4>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="text-center p-3 bg-light rounded">
+                        <h6 class="text-muted mb-1">Shipped</h6>
+                        <h4 class="text-info mb-0">${container24hrData.shipped_24hr}</h4>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.getElementById('container24hrSummary').innerHTML = html24hr;
+    }
+
+    // Last 24 Hours H&D Summary
+    const hidem24hrJson = '{{ last_24hr_hidem|safe }}';
+    const hidem24hrData = JSON.parse(hidem24hrJson);
+
+    if (hidem24hrData && hidem24hrData.handling_24hr !== undefined) {
+        const htmlHidem = `
+            <div class="row g-2">
+                <div class="col-12">
+                    <div class="p-2 bg-danger text-white rounded text-center">
+                        <small class="mb-1">Handling Charges</small>
+                        <h5 class="mb-0">${hidem24hrData.handling_24hr.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})} SAR</h5>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="p-2 bg-warning text-dark rounded text-center">
+                        <small class="mb-1">Demurrage Charges</small>
+                        <h5 class="mb-0">${hidem24hrData.demurrage_24hr.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})} SAR</h5>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="p-2 bg-secondary text-white rounded text-center">
+                        <small class="mb-1">Total</small>
+                        <h5 class="mb-0">${hidem24hrData.total_charges_24hr.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})} SAR</h5>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.getElementById('hidem24hrSummary').innerHTML = htmlHidem;
+    }
+
+    // Month-to-Date Summary
+    const mtdJson = '{{ month_to_date|safe }}';
+    const mtdData = JSON.parse(mtdJson);
+
+    if (mtdData && mtdData.mtd_received !== undefined) {
+        const htmlMtd = `
+            <div class="row g-2">
+                <div class="col-md-3 col-6">
+                    <div class="p-2 bg-light rounded text-center">
+                        <small class="text-muted">Received</small>
+                        <h6 class="text-success mb-0">${mtdData.mtd_received}</h6>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="p-2 bg-light rounded text-center">
+                        <small class="text-muted">Shipped</small>
+                        <h6 class="text-info mb-0">${mtdData.mtd_shipped}</h6>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="p-2 bg-light rounded text-center">
+                        <small class="text-muted">Balance</small>
+                        <h6 class="text-success mb-0">${mtdData.mtd_balance}</h6>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="p-2 bg-light rounded text-center">
+                        <small class="text-muted">Total Charges</small>
+                        <h6 class="mb-0">${mtdData.mtd_total_charges.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})} SAR</h6>
+                    </div>
+                </div>
+                <div class="col-md-6 col-12">
+                    <div class="p-2 bg-danger text-white rounded text-center">
+                        <small class="mb-1">Handling Charges</small>
+                        <h6 class="mb-0">${mtdData.mtd_handling.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})} SAR</h6>
+                    </div>
+                </div>
+                <div class="col-md-6 col-12">
+                    <div class="p-2 bg-warning text-dark rounded text-center">
+                        <small class="mb-1">Demurrage Charges</small>
+                        <h6 class="mb-0">${mtdData.mtd_demurrage.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})} SAR</h6>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.getElementById('mtdSummary').innerHTML = htmlMtd;
+    }
 
     // ==========================================
     // CHART 1: Dynamic Line Chart
     // ==========================================
     const lineChartDataJson = '{{ container_chart_data|safe }}';
+    console.log('Container chart JSON:', lineChartDataJson);
     const lineChartData = JSON.parse(lineChartDataJson);
+    console.log('Container chart data:', lineChartData);
 
     if (lineChartData.labels && lineChartData.labels.length > 0) {
+        console.log('Rendering container chart with', lineChartData.labels.length, 'data points');
         const lineChartOptions = {
+            colors: ['#27a745', '#007bff'],
             series: [
                 {
                     name: 'Received',
-                    data: lineChartData.recvd_data,
-                    color: '#27a745'
+                    data: lineChartData.recvd_data
                 },
                 {
                     name: 'Shipped',
-                    data: lineChartData.shipped_data,
-                    color: '#007bff'
+                    data: lineChartData.shipped_data
                 }
             ],
             chart: {
@@ -116,7 +280,6 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             markers: {
                 size: 6,
-                colors: ['#27a745', '#007bff'],
                 strokeWidth: 2,
                 strokeColors: ['#fff', '#fff'],
                 hover: {
@@ -178,27 +341,41 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             legend: {
                 position: 'top',
-                horizontalAlign: 'right',
+                horizontalAlign: 'left',
                 fontSize: 13,
                 fontFamily: 'Segoe UI',
+                show: true,
+                showForSingleSeries: true,
+                labels: {
+                    colors: '#1a2035',
+                    useSeriesColors: false
+                },
                 markers: {
                     width: 12,
                     height: 12,
-                    radius: 2
+                    radius: 2,
+                    strokeWidth: 0
                 }
             }
         };
 
-        new ApexCharts(document.querySelector("#containerLineChart"), lineChartOptions).render();
+        const chart1 = new ApexCharts(document.querySelector("#containerLineChart"), lineChartOptions);
+        chart1.render();
+        console.log('Container chart rendered successfully');
     }
 
     // ==========================================
     // CHART 2: 3D Dynamic Bar Chart
     // ==========================================
+    // CHART 2: 3D Dynamic Bar Chart
+    // ==========================================
     const barChartDataJson = '{{ container_year_chart_data|safe }}';
+    console.log('Container year chart JSON:', barChartDataJson);
     const barChartData = JSON.parse(barChartDataJson);
+    console.log('Container year chart data:', barChartData);
 
     if (barChartData.labels && barChartData.labels.length > 0) {
+        console.log('Rendering bar chart with', barChartData.labels.length, 'data points');
         const barChartOptions = {
             series: [
                 {
@@ -315,33 +492,49 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             legend: {
                 position: 'top',
-                horizontalAlign: 'right',
+                horizontalAlign: 'left',
                 fontSize: 13,
-                fontFamily: 'Segoe UI'
+                fontFamily: 'Segoe UI',
+                show: true,
+                showForSingleSeries: true,
+                labels: {
+                    colors: '#1a2035',
+                    useSeriesColors: false
+                },
+                markers: {
+                    width: 12,
+                    height: 12,
+                    radius: 2,
+                    strokeWidth: 0
+                }
             }
         };
 
-        new ApexCharts(document.querySelector("#containerYearBarChart"), barChartOptions).render();
+        const chart2 = new ApexCharts(document.querySelector("#containerYearBarChart"), barChartOptions);
+        chart2.render();
+        console.log('Bar chart rendered successfully');
     }
 
     // ==========================================
     // CHART 3: Handling & Demurrage Charges Dynamic Line Chart
     // ==========================================
     const hiDemChartDataJson = '{{ handling_demurrage_chart_data|safe }}';
+    console.log('Handling & Demurrage chart JSON:', hiDemChartDataJson);
     const hiDemChartData = JSON.parse(hiDemChartDataJson);
+    console.log('Handling & Demurrage chart data:', hiDemChartData);
 
     if (hiDemChartData.labels && hiDemChartData.labels.length > 0) {
+        console.log('Rendering H&D chart with', hiDemChartData.labels.length, 'data points');
         const hiDemChartOptions = {
+            colors: ['#FF6B6B', '#FFA500'],
             series: [
                 {
                     name: 'Handling Charges',
-                    data: hiDemChartData.handling_data,
-                    color: '#FF6B6B'
+                    data: hiDemChartData.handling_data
                 },
                 {
                     name: 'Demurrage Charges',
-                    data: hiDemChartData.demurrage_data,
-                    color: '#FFA500'
+                    data: hiDemChartData.demurrage_data
                 }
             ],
             chart: {
@@ -349,6 +542,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 height: 400,
                 toolbar: {
                     show: true,
+                    position: 'bottom',
                     tools: {
                         download: true,
                         selection: true,
@@ -383,7 +577,6 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             markers: {
                 size: 6,
-                colors: ['#FF6B6B', '#FFA500'],
                 strokeWidth: 2,
                 strokeColors: ['#fff', '#fff'],
                 hover: {
@@ -422,10 +615,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 labels: {
                     formatter: function(value) {
-                        return '$' + value.toLocaleString('en-US', {
+                        return value.toLocaleString('en-US', {
                             minimumFractionDigits: 0,
                             maximumFractionDigits: 0
-                        });
+                        }) + ' SAR';
                     }
                 }
             },
@@ -447,27 +640,36 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 y: {
                     formatter: function(value) {
-                        return '$' + value.toLocaleString('en-US', {
+                        return value.toLocaleString('en-US', {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2
-                        });
+                        }) + ' SAR';
                     }
                 }
             },
             legend: {
                 position: 'top',
-                horizontalAlign: 'right',
+                horizontalAlign: 'left',
                 fontSize: 13,
                 fontFamily: 'Segoe UI',
+                show: true,
+                showForSingleSeries: true,
+                labels: {
+                    colors: '#1a2035',
+                    useSeriesColors: false
+                },
                 markers: {
                     width: 12,
                     height: 12,
-                    radius: 2
+                    radius: 2,
+                    strokeWidth: 0
                 }
             }
         };
 
-        new ApexCharts(document.querySelector("#handlingDemurrageChart"), hiDemChartOptions).render();
+        const chart3 = new ApexCharts(document.querySelector("#handlingDemurrageChart"), hiDemChartOptions);
+        chart3.render();
+        console.log('H&D chart rendered successfully');
     }
 });
 </script>
