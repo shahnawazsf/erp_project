@@ -1,7 +1,7 @@
 """
 Production server entry point using Waitress.
 Run:  python serve.py
-Access on LAN:  http://172.16.2.3:9000
+Access on LAN:  http://172.16.2.3:9001
 """
 import os
 import sys
@@ -17,7 +17,7 @@ from waitress import serve
 from erp_project.wsgi import application
 
 HOST = '0.0.0.0'
-PORT = 9000
+PORT = 9001
 THREADS = 8   # concurrent request threads
 
 if __name__ == '__main__':

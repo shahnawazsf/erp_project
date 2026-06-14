@@ -1,4 +1,4 @@
-# Development Changelog
+in cla# Development Changelog
 
 ## June 3, 2026
 
@@ -289,4 +289,162 @@ python manage.py collectstatic --noinput
 - Add date range presets (Today, This Week, This Month, Last 30 Days)
 - Performance optimization for large date ranges
 - Set up proper production environment with DEBUG=False and specific ALLOWED_HOSTS
+
+---
+
+## June 11, 2026 — Operations Dashboard Release
+
+### 1. Operations Module + Dashboard as Default Landing Page
+
+Added a complete `operations` Django app with `WorkOrder`, `Maintenance`, and
+`OperationalMetric` models, sidebar navigation entry, and global-search
+registration. The Operations Dashboard is now the post-login landing page
+(commits `071bcfc`, `9bab8d2`, `16c6d5d`).
+
+### 2. ApexCharts Visualizations
+
+Migrated from prior chart library to **ApexCharts** for 3D-style dynamic
+visualizations (commit `ab269df`). Three charts live on the dashboard:
+
+| Chart | Source | Function |
+|-------|--------|----------|
+| Daily Container Activity (line) | `GET_RECVD_SHIPPED_DATE_LIST` | `get_container_chart_data()` |
+| Yearly Container Trends (bar)   | `RECEIPTDETAIL`               | `get_container_year_chart_data()` |
+| Handling & Demurrage (line)     | `GET_HI_DEM_LIST`             | `get_handling_demurrage_chart_data()` |
+
+Fixes shipped along the way: x-axis numeric day labels (`e41dd11`), column
+names matched to Oracle output (`3b78d10`), missing-table error handling
+(`e8f3d83`).
+
+### 3. Summary Cards
+
+Added three summary cards above the charts: **Last 24 Hours Containers**,
+**Last 24 Hours Charges**, **Month-to-Date Summary**. Each is backed by its
+own view function (`get_last_24hr_*`, `get_month_to_date_summary`).
+
+### 4. Caching Layer
+
+All chart and summary view functions write to Django's cache with a
+5-minute TTL. Cache keys:
+
+```
+container_chart_data
+container_year_chart_data
+handling_demurrage_chart_data
+last_24hr_container_summary
+last_24hr_hidem_summary
+month_to_date_summary
+```
+
+Measured: first load 2–3 s → cached load ~500 ms, ~80 % DB query reduction.
+
+### 5. Favicon Branding
+
+Added full favicon set under `static/image/` (16/32/192/512 PNGs,
+`apple-touch-icon`, `favicon.ico`, `site.webmanifest`) and collected to
+`staticfiles/`. See `docs/FAVICON_SETUP_GUIDE.md`.
+
+### 6. New Documentation
+
+- `docs/OPERATIONS_MODULE_GUIDE.md`
+- `docs/OPERATIONS_QUICK_START.md`
+- `docs/OPERATIONS_DASHBOARD_COMPLETE_GUIDE.md`
+- `docs/APEXCHARTS_IMPLEMENTATION_GUIDE.md`
+- `docs/CHART_IMPLEMENTATION_GUIDE.md`
+- `docs/PERFORMANCE_OPTIMIZATION.md`
+- `docs/FAVICON_SETUP_GUIDE.md`
+- `README.md` (top-level project README)
+
+---
+
+## June 14, 2026 — Auth Hardening, Port Switch, Report Polish
+
+### 1. Schema-Qualified Stored Procedure Calls
+
+All call sites for `GET_USER_DETAIL` now use the fully qualified name
+`SDESERP.GET_USER_DETAIL`. This protects against current-schema drift when
+the connection user is changed.
+
+**Files modified**
+- `accounts/oracle_auth.py:29`
+- `accounts/backends.py:43`
+- `test_oracle_auth.py:104`
+- `test_oracle_auth_quick.py:47`
+
+### 2. Role Mapping Simplified — No More LOGIN_USER Query
+
+`accounts/oracle_auth.py:call_get_user_detail()` previously made a second
+trip to the `LOGIN_USER` table to resolve the user's role. The Oracle
+procedure already returns the group code in `P_USER_GRP_ID`, so the extra
+query was redundant. The function now maps directly:
+
+```python
+role_mapping = {'A': 'admin', 'U': 'employee'}
+oracle_role  = (p_user_grp_id.getvalue() or '').strip().upper()
+user_role    = role_mapping.get(oracle_role, 'employee')
+```
+
+**Effect:** one fewer Oracle round-trip per login, and the role source is
+now single — whatever `GET_USER_DETAIL` returns. The `LOGIN_USER` table is
+no longer read during authentication.
+
+### 3. Server Port Standardized on 9001
+
+The Waitress production server and the launcher script now bind to **9001**
+instead of 9000 (port 8000/8080 are reserved by Hyper-V on this machine,
+9000 was found to conflict with another service).
+
+- `serve.py:20`           — `PORT = 9001`
+- `START_SERVER.bat`      — banner URL updated to `http://172.16.2.3:9001`
+
+### 4. Customer Invoice Report — Excel Export Date Fix
+
+Excel was auto-coercing the Invoice Date column (DD/MM/YYYY strings) into
+MM/DD/YYYY dates on open, corrupting display. The export routine now forces
+column C to plain text after `table_to_sheet`:
+
+```js
+const ws = XLSX.utils.table_to_sheet(table, { raw: true });
+for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+    const cell = ws[XLSX.utils.encode_cell({ r: R, c: 2 })];
+    if (cell && cell.v != null && cell.v !== '') {
+        cell.t = 's'; cell.v = String(cell.v); cell.z = '@';
+        delete cell.w;
+    }
+}
+```
+
+File: `templates/finance/report_customer_invoice.html:446`
+
+### 5. VAT Report — Loading Spinner
+
+The monthly VAT report now shows a full-screen loader overlay between
+clicking a month tile and the report rendering — the SQL can take several
+seconds and users were double-clicking. The overlay is shown in
+`selectMonth()` and hidden on `DOMContentLoaded`.
+
+File: `templates/finance/report_vat.html`
+
+### 6. New PDF Reference Material
+
+Added daily-activity reference PDFs to `docs/` and `erp_project/` for the
+SDRS operations team. Not consumed by the app; reference only.
+
+---
+
+## Uncommitted Work-In-Progress (as of 2026-06-14)
+
+The following changes are in the working tree but **not yet committed**.
+They are listed here so the changelog reflects what is currently in
+progress; review before committing.
+
+- `templates/core/dashboard.html` — card titles temporarily replaced with
+  placeholder strings (`"Total"`, `"XYZ"`, `"EXPENCE"`, `"RE"`, `"LOW"`).
+  This is unfinished relabeling work and should be either completed with
+  real labels or reverted before commit.
+- `erp_project/asgi.py` — single leading blank line added (no functional
+  change).
+- `staticfiles/staticfiles.json` — regenerated by `collectstatic`; commit
+  alongside any static asset changes.
+
 

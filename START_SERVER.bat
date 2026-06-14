@@ -6,7 +6,7 @@ echo  ==========================================
 echo   SDES ERP - Starting Production Server
 echo  ==========================================
 echo.
-echo  Network URL: http://172.16.2.3:9000
+echo  Network URL: http://172.16.2.3:9001
 echo.
 
 cd /d E:\Testing\projects\erp_project

@@ -26,7 +26,7 @@ def call_get_user_detail(username, password):
         p_user_desc     = cur.var(oracledb.STRING)
         p_status        = cur.var(oracledb.STRING)
 
-        cur.callproc('GET_USER_DETAIL', [
+        cur.callproc('SDESERP.GET_USER_DETAIL', [
             username, password,
             p_user_name, p_user_grp_id, p_user_emp_code,
             p_user_desc, p_status,
@@ -37,37 +37,23 @@ def call_get_user_detail(username, password):
             logger.warning('GET_USER_DETAIL: status=%r for username=%r', status, username)
             return None
 
+        # Map Oracle roles to permission system roles
+        role_mapping = {
+            'A': 'admin',      # Admin
+            'U': 'employee',   # User
+        }
+        oracle_role = (p_user_grp_id.getvalue() or '').strip().upper()
+        user_role = role_mapping.get(oracle_role, 'employee')
+
         user_data = {
             'username':      username,
             'user_name':     p_user_name.getvalue() or '',
             'user_grp_id':   p_user_grp_id.getvalue() or '',
             'user_emp_code': p_user_emp_code.getvalue() or '',
             'user_desc':     p_user_desc.getvalue() or '',
-            'role':          'employee',  # default role
+            'role':          user_role,
         }
-
-        # Query USER_ROLE from LOGIN_USER table and map to permission system role
-        try:
-            cur.execute(
-                "SELECT USER_ROLE FROM LOGIN_USER WHERE USER_ID = :uid",
-                {'uid': username}
-            )
-            result = cur.fetchone()
-            if result:
-                oracle_role = result[0]
-                if oracle_role:
-                    # Map Oracle roles to permission system roles
-                    role_mapping = {
-                        'A': 'admin',      # Admin
-                        'U': 'employee',   # User
-                    }
-                    oracle_role = oracle_role.strip().upper()
-                    user_data['role'] = role_mapping.get(oracle_role, 'employee')
-                    logger.debug('Mapped user role %r → %r for %s', oracle_role, user_data['role'], username)
-            else:
-                logger.debug('User %s not found in LOGIN_USER table, using default role', username)
-        except Exception as e:
-            logger.warning('Failed to fetch USER_ROLE from LOGIN_USER for %s: %s', username, e)
+        logger.debug('Mapped user role %r → %r for %s', oracle_role, user_role, username)
 
         return user_data
 

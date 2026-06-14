@@ -16,7 +16,25 @@
       "PowerShell(cd \"E:\\\\Testing\\\\projects\\\\erp_project\"; $env:DJANGO_SETTINGS_MODULE = \"erp_project.settings\"; python manage.py check 2>&1)",
       "PowerShell(cd \"E:\\\\Testing\\\\projects\\\\erp_project\"; python -m py_compile accounts\\\\backends.py; echo \"OK: $LASTEXITCODE\")",
       "PowerShell(Test-NetConnection *)",
-      "PowerShell(code \"E:\\\\Testing\\\\projects\\\\erp_project\")"
+      "PowerShell(code \"E:\\\\Testing\\\\projects\\\\erp_project\")",
+      "Bash(python manage.py runserver 9001)",
+      "Bash(Get-Content \"C:\\\\Users\\\\SFARID~1.SDE\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\E--Testing-projects-erp-project\\\\22e5d7c3-2b34-4428-a85e-4622a64d3189\\\\tasks\\\\bidq21h3s.output\" -Tail 20)",
+      "Bash(Start-Sleep -Seconds 3)",
+      "Bash(Write-Host \"Server should be ready. Opening browser test...\")",
+      "Bash(curl -s http://localhost:9001/accounts/login/)",
+      "Bash(curl -s -L http://localhost:9001/finance/report-customer-invoice/ -c /tmp/cookies.txt -b /tmp/cookies.txt)",
+      "Bash(curl -s -L http://localhost:9001/finance/reports/customer-invoice/)",
+      "PowerShell(Stop-Process *)",
+      "Bash(git commit -m ' *)",
+      "Bash(ipconfig)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(Get-ChildItem -Path \"E:\\\\Testing\\\\projects\\\\erp_project\\\\docs\" -File)",
+      "Bash(Select-Object Name)",
+      "Bash(python *)",
+      "Bash(pkill -f \"python manage.py runserver\")",
+      "Bash(git remote *)",
+      "Bash(git push *)"
     ]
   }
 }

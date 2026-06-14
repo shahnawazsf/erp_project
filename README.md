@@ -302,14 +302,27 @@ For issues, questions, or suggestions:
 ## 📊 Commit History
 
 ```
+35ee0db - Add comprehensive README with installation guide and documentation
 790d654 - Add comprehensive Operations Dashboard implementation guide
 d32273a - Implement Operations Dashboard with Charts, Summary Cards, and Performance Optimization
 668ed2b - Add dynamic line chart for Handling & Demurrage Charges
 69df594 - Add comprehensive ApexCharts implementation guide
 ab269df - Upgrade to ApexCharts for 3D dynamic visualizations
+04ed1e1 - Add yearly container bar chart to Operations Dashboard
+e8f3d83 - Add error handling to Operations views for missing database tables
+16c6d5d - Make Operations Dashboard the default landing page
+071bcfc - Add Operations module for work order and maintenance management
 ```
 
-View full history: `git log`
+### Working on now (uncommitted, 2026-06-14)
+
+- `SDESERP.GET_USER_DETAIL` — schema-qualified procedure calls across `accounts/oracle_auth.py`, `accounts/backends.py`, and the two `test_oracle_auth*.py` scripts
+- Role mapping simplified — derived directly from `P_USER_GRP_ID`, no more second `LOGIN_USER` query at login
+- Server port standardized on **9001** (`serve.py`, `START_SERVER.bat`)
+- Customer invoice Excel export forces the Invoice Date column to text so Excel stops auto-flipping DD/MM/YYYY into MM/DD/YYYY
+- VAT monthly report shows a loader overlay while the report query runs
+
+View full history: `git log`. Dated narrative: `docs/DEVELOPMENT_CHANGELOG.md`.
 
 ## 🙏 Acknowledgments
 
@@ -320,8 +333,8 @@ View full history: `git log`
 
 ---
 
-**Last Updated:** June 11, 2026  
-**Version:** 1.0.0  
+**Last Updated:** June 14, 2026  
+**Version:** 1.1.0  
 **Status:** ✅ Production Ready
 
 [View on GitHub](https://github.com/shahnawazsf/erp_project)

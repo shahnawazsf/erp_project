@@ -40,7 +40,7 @@ def _call_get_user_detail(username, password):
         p_user_desc     = cur.var(oracledb.STRING)
         p_status        = cur.var(oracledb.STRING)
 
-        cur.callproc('GET_USER_DETAIL', [
+        cur.callproc('SDESERP.GET_USER_DETAIL', [
             username, password,
             p_user_name, p_user_grp_id, p_user_emp_code,
             p_user_desc, p_status,

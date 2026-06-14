@@ -241,7 +241,7 @@ def report_customer_invoice(request):
                     d1_yyyy_mm_dd = filters['date_from']
                     d2_yyyy_mm_dd = filters['date_to']
                     query = f"""
-                        SELECT a.INV_NO, a.INV_DATE, a.CUST_CODE, a.AGENT_CODE, a.COMPANY, a.OSO_NO,
+                        SELECT a.INV_NO, a.INV_DATE, a.CUST_CODE, a.AGENT_CODE, a.COMPANY,
                                a.CHARGE_AMOUNT, a.VAT, a.TOTAL, a.BOLNUMBER, b.BOLNUMBER AS BOLNUMBER_1
                         FROM INV_WEEKLY_REPORT_VIEW a
                         LEFT JOIN (

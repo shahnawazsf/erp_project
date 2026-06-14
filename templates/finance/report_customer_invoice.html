@@ -255,7 +255,6 @@
                     <th>Invoice Date</th>
                     <th>Cust Code</th>
                     <th>Company</th>
-                    <th>OSO No</th>
                     <th class="amount-col">Charge Amount</th>
                     <th class="amount-col">VAT</th>
                     <th class="amount-col">Total</th>
@@ -271,10 +270,9 @@
                     <td>{{ row.inv_date|default:"—" }}</td>
                     <td><code class="small">{{ row.cust_code|default:"—" }}</code></td>
                     <td>{{ row.company|default:"—" }}</td>
-                    <td>{{ row.oso_no|default:"—" }}</td>
-                    <td class="amount-col">{{ row.charge_amount|default:"0.00" }}</td>
-                    <td class="amount-col text-warning fw-semibold">{{ row.vat|default:"0.00" }}</td>
-                    <td class="amount-col fw-bold">{{ row.total|default:"0.00" }}</td>
+                    <td class="amount-col">{{ row.charge_amount|default:0|floatformat:"2" }}</td>
+                    <td class="amount-col text-warning fw-semibold">{{ row.vat|default:0|floatformat:"2" }}</td>
+                    <td class="amount-col fw-bold">{{ row.total|default:0|floatformat:"2" }}</td>
                     <td class="text-muted small">{{ row.bolnumber|default:"—" }}</td>
                     <td class="text-muted small">{{ row.bolnumber_1|default:"—" }}</td>
                 </tr>
@@ -282,7 +280,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="6" class="text-end pe-3">Totals</td>
+                    <td colspan="5" class="text-end pe-3">Totals</td>
                     <td class="amount-col" id="totalCharge">—</td>
                     <td class="amount-col text-warning" id="totalVat">—</td>
                     <td class="amount-col" id="totalAmount">—</td>
@@ -370,9 +368,9 @@ document.addEventListener('DOMContentLoaded', function () {
     allRows.forEach(function (r) {
         const c = r.querySelectorAll('td');
         const p = i => parseFloat((c[i]?.textContent || '0').replace(/,/g, '')) || 0;
-        charge += p(6);
-        vat    += p(7);
-        total  += p(8);
+        charge += p(5);
+        vat    += p(6);
+        total  += p(7);
     });
     const fmt = n => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     document.getElementById('totalCharge').textContent = fmt(charge);
@@ -446,7 +444,22 @@ function exportExcel() {
     /* Show all rows temporarily so SheetJS captures everything */
     allRows.forEach(r => r.style.display = '');
     const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.table_to_sheet(document.getElementById('reportTable'));
+    const ws = XLSX.utils.table_to_sheet(document.getElementById('reportTable'), { raw: true });
+
+    /* Force the Invoice Date column (column C) to be plain text so Excel
+       does not auto-convert DD/MM/YYYY strings into MM/DD/YYYY dates. */
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+        const addr = XLSX.utils.encode_cell({ r: R, c: 2 });
+        const cell = ws[addr];
+        if (cell && cell.v != null && cell.v !== '') {
+            cell.t = 's';
+            cell.v = String(cell.v);
+            cell.z = '@';
+            delete cell.w;
+        }
+    }
+
     XLSX.utils.book_append_sheet(wb, ws, 'Customer Invoice');
     const agent  = '{{ filters.agent_code }}';
     const period = '{{ filters.date_from }}_{{ filters.date_to }}';

@@ -101,7 +101,7 @@ try:
     p_is_active  = cur.var(oracledb.NUMBER)
     p_status     = cur.var(oracledb.STRING)
 
-    cur.callproc('GET_USER_DETAIL', [
+    cur.callproc('SDESERP.GET_USER_DETAIL', [
         test_username, test_password,
         p_user_id, p_first_name, p_last_name,
         p_email, p_role, p_phone, p_is_active, p_status,

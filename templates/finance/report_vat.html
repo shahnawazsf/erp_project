@@ -3,6 +3,50 @@
 
 {% block extra_css %}
 <style>
+    /* ── Loading Spinner ── */
+    .loader-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.95);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        backdrop-filter: blur(2px);
+    }
+    .loader-overlay.hidden {
+        display: none;
+    }
+    .spinner-container {
+        text-align: center;
+    }
+    .spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid #1a2e52;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1.5rem;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .loader-text {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #1a2e52;
+        margin-bottom: 0.5rem;
+    }
+    .loader-subtext {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+
     /* ── Month Calendar ── */
     .month-calendar-card {
         border-radius: 14px; border: none;
@@ -113,6 +157,15 @@
 {% endblock %}
 
 {% block content %}
+
+<!-- Loading Spinner -->
+<div class="loader-overlay hidden" id="loaderOverlay">
+    <div class="spinner-container">
+        <div class="spinner"></div>
+        <div class="loader-text">Generating Report</div>
+        <div class="loader-subtext">Please wait while we fetch your VAT data...</div>
+    </div>
+</div>
 
 <!-- Breadcrumb -->
 <nav aria-label="breadcrumb" class="no-print mb-3">
@@ -378,10 +431,23 @@ function selectMonth(el, monthNum) {
     document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('selected'));
     el.classList.add('selected');
     document.getElementById('selectedMonth').value = el.dataset.month;
+
+    // Show loader before submitting
+    const loader = document.getElementById('loaderOverlay');
+    if (loader) {
+        loader.classList.remove('hidden');
+    }
+
     document.getElementById('monthForm').submit();
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+    // Hide loader once page is loaded
+    const loader = document.getElementById('loaderOverlay');
+    if (loader) {
+        loader.classList.add('hidden');
+    }
+
     const saved = document.getElementById('selectedMonth') && document.getElementById('selectedMonth').value;
     if (saved) {
         document.querySelectorAll('.month-btn').forEach(function (btn) {
