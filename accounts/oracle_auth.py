@@ -53,7 +53,7 @@ def call_get_user_detail(username, password):
             'user_desc':     p_user_desc.getvalue() or '',
             'role':          user_role,
         }
-        logger.debug('Mapped user role %r → %r for %s', oracle_role, user_role, username)
+        # logger.debug('Mapped user role %r → %r for %s', oracle_role, user_role, username)
 
         return user_data
 

@@ -223,12 +223,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // CHART 1: Dynamic Line Chart
     // ==========================================
     const lineChartDataJson = '{{ container_chart_data|safe }}';
-    console.log('Container chart JSON:', lineChartDataJson);
+    // console.log('Container chart JSON:', lineChartDataJson);
     const lineChartData = JSON.parse(lineChartDataJson);
-    console.log('Container chart data:', lineChartData);
+    // console.log('Container chart data:', lineChartData);
 
     if (lineChartData.labels && lineChartData.labels.length > 0) {
-        console.log('Rendering container chart with', lineChartData.labels.length, 'data points');
+        // console.log('Rendering container chart with', lineChartData.labels.length, 'data points');
         const lineChartOptions = {
             colors: ['#27a745', '#007bff'],
             series: [
@@ -361,7 +361,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const chart1 = new ApexCharts(document.querySelector("#containerLineChart"), lineChartOptions);
         chart1.render();
-        console.log('Container chart rendered successfully');
+        // console.log('Container chart rendered successfully');
     }
 
     // ==========================================
@@ -370,12 +370,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // CHART 2: 3D Dynamic Bar Chart
     // ==========================================
     const barChartDataJson = '{{ container_year_chart_data|safe }}';
-    console.log('Container year chart JSON:', barChartDataJson);
+    // console.log('Container year chart JSON:', barChartDataJson);
     const barChartData = JSON.parse(barChartDataJson);
-    console.log('Container year chart data:', barChartData);
+    // console.log('Container year chart data:', barChartData);
 
     if (barChartData.labels && barChartData.labels.length > 0) {
-        console.log('Rendering bar chart with', barChartData.labels.length, 'data points');
+        // console.log('Rendering bar chart with', barChartData.labels.length, 'data points');
         const barChartOptions = {
             series: [
                 {
@@ -512,19 +512,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const chart2 = new ApexCharts(document.querySelector("#containerYearBarChart"), barChartOptions);
         chart2.render();
-        console.log('Bar chart rendered successfully');
+        // console.log('Bar chart rendered successfully');
     }
 
     // ==========================================
     // CHART 3: Handling & Demurrage Charges Dynamic Line Chart
     // ==========================================
     const hiDemChartDataJson = '{{ handling_demurrage_chart_data|safe }}';
-    console.log('Handling & Demurrage chart JSON:', hiDemChartDataJson);
+    // console.log('Handling & Demurrage chart JSON:', hiDemChartDataJson);
     const hiDemChartData = JSON.parse(hiDemChartDataJson);
-    console.log('Handling & Demurrage chart data:', hiDemChartData);
+    // console.log('Handling & Demurrage chart data:', hiDemChartData);
 
     if (hiDemChartData.labels && hiDemChartData.labels.length > 0) {
-        console.log('Rendering H&D chart with', hiDemChartData.labels.length, 'data points');
+        // console.log('Rendering H&D chart with', hiDemChartData.labels.length, 'data points');
         const hiDemChartOptions = {
             colors: ['#FF6B6B', '#FFA500'],
             series: [
@@ -669,7 +669,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const chart3 = new ApexCharts(document.querySelector("#handlingDemurrageChart"), hiDemChartOptions);
         chart3.render();
-        console.log('H&D chart rendered successfully');
+        // console.log('H&D chart rendered successfully');
     }
 });
 </script>
