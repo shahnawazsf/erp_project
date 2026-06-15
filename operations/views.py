@@ -19,30 +19,30 @@ def get_container_year_summary():
 
     query ="""
         SELECT TO_NUMBER(TO_CHAR(DATERECEIVED,'YYYY')) YEAR,TO_NUMBER(TO_CHAR(DATERECEIVED,'YYYY')) YEAR1,SUM(QTYRECEIVED) QTY
-        FROM RECEIPTDETAIL 
-        WHERE STORERKEY LIKE 'SDRS%' 
-        AND SKU LIKE 'CNT%' 
-        AND STATUS=9 
+        FROM RECEIPTDETAIL
+        WHERE STORERKEY LIKE 'SDRS%'
+        AND SKU LIKE 'CNT%'
+        AND STATUS=9
         AND TO_NUMBER(TO_CHAR(DATERECEIVED,'YYYY'))>=TO_NUMBER(TO_CHAR(SYSDATE,'YYYY'))-2
-        AND TO_NUMBER(TO_CHAR(DATERECEIVED,'MMDD'))<=TO_NUMBER(TO_CHAR(SYSDATE-1,'MMDD')) 
+        AND TO_NUMBER(TO_CHAR(DATERECEIVED,'MMDD'))<=TO_NUMBER(TO_CHAR(SYSDATE-1,'MMDD'))
         GROUP BY TO_NUMBER(TO_CHAR(DATERECEIVED,'YYYY'))
         ORDER BY TO_NUMBER(TO_CHAR(DATERECEIVED,'YYYY'))
-        
+
     """
     try:
         with connection.cursor() as cursor:
             cursor.execute(query)
             columns = [col[0] for col in cursor.description]
             data = [dict(zip(columns, row)) for row in cursor.fetchall()]
-            print(f"DEBUG: Container data retrieved: {len(data)} records")
-            if data:
-                print(f"DEBUG: First record: {data[0]}")
-                print(f"DEBUG: Columns: {columns}")
+            # print(f"DEBUG: Container data retrieved: {len(data)} records")
+            # if data:
+            #     print(f"DEBUG: First record: {data[0]}")
+            #     print(f"DEBUG: Columns: {columns}")
             return data
     except Exception as e:
-        print(f"DEBUG: Error in get_container_year_summary: {str(e)}")
-        import traceback
-        traceback.print_exc()
+        # print(f"DEBUG: Error in get_container_year_summary: {str(e)}")
+        # import traceback
+        # traceback.print_exc()
         return []
 
 
@@ -53,13 +53,13 @@ def get_container_year_chart_data():
     cache_key = 'container_year_chart_data'
     cached_data = cache.get(cache_key)
     if cached_data:
-        print(f"DEBUG: Returning cached container year chart data")
+        # print(f"DEBUG: Returning cached container year chart data")
         return cached_data
 
     data = get_container_year_summary()
 
     if not data:
-        print("DEBUG: No data returned from get_container_year_summary()")
+        # print("DEBUG: No data returned from get_container_year_summary()")
         return json.dumps({
             'labels': [],
             'qty_data': []
@@ -77,12 +77,12 @@ def get_container_year_chart_data():
             labels.append(str(year))
             qty_data.append(qty)
 
-            print(f"DEBUG: Added year data - Year: {year}, Qty: {qty}")
+            # print(f"DEBUG: Added year data - Year: {year}, Qty: {qty}")
         except Exception as e:
-            print(f"DEBUG: Error processing item {item}: {str(e)}")
+            # print(f"DEBUG: Error processing item {item}: {str(e)}")
             continue
 
-    print(f"DEBUG: Chart data prepared - {len(labels)} years")
+    # print(f"DEBUG: Chart data prepared - {len(labels)} years")
     result = json.dumps({
         'labels': labels,
         'qty_data': qty_data
@@ -101,28 +101,28 @@ def get_handling_demurrage_data():
         ORDER BY TRAN_DAY ASC
     """
 
-    print(f"DEBUG: Starting get_handling_demurrage_data()")
-    print(f"DEBUG: Query: {query}")
+    # print(f"DEBUG: Starting get_handling_demurrage_data()")
+    # print(f"DEBUG: Query: {query}")
 
     try:
         with connection.cursor() as cursor:
-            print(f"DEBUG: Executing query...")
+            # print(f"DEBUG: Executing query...")
             cursor.execute(query)
-            print(f"DEBUG: Query executed successfully")
+            # print(f"DEBUG: Query executed successfully")
             columns = [col[0] for col in cursor.description]
-            print(f"DEBUG: Columns found: {columns}")
+            # print(f"DEBUG: Columns found: {columns}")
             data = [dict(zip(columns, row)) for row in cursor.fetchall()]
-            print(f"DEBUG: Handling & Demurrage data retrieved: {len(data)} records")
-            if data:
-                print(f"DEBUG: First record: {data[0]}")
-                print(f"DEBUG: All data: {data}")
-            else:
-                print(f"DEBUG: WARNING - No data returned!")
+            # print(f"DEBUG: Handling & Demurrage data retrieved: {len(data)} records")
+            # if data:
+            #     print(f"DEBUG: First record: {data[0]}")
+            #     print(f"DEBUG: All data: {data}")
+            # else:
+            #     print(f"DEBUG: WARNING - No data returned!")
             return data
     except Exception as e:
-        print(f"DEBUG: ERROR in get_handling_demurrage_data: {str(e)}")
-        import traceback
-        traceback.print_exc()
+        # print(f"DEBUG: ERROR in get_handling_demurrage_data: {str(e)}")
+        # import traceback
+        # traceback.print_exc()
         return []
 
 
@@ -133,13 +133,13 @@ def get_handling_demurrage_chart_data():
     cache_key = 'handling_demurrage_chart_data'
     cached_data = cache.get(cache_key)
     if cached_data:
-        print(f"DEBUG: Returning cached H&D chart data")
+        # print(f"DEBUG: Returning cached H&D chart data")
         return cached_data
 
     data = get_handling_demurrage_data()
 
     if not data:
-        print("DEBUG: No data returned from get_handling_demurrage_data()")
+        # print("DEBUG: No data returned from get_handling_demurrage_data()")
         return json.dumps({
             'labels': [],
             'handling_data': [],
@@ -161,12 +161,12 @@ def get_handling_demurrage_chart_data():
             handling_data.append(round(handling, 2))
             demurrage_data.append(round(demurrage, 2))
 
-            print(f"DEBUG: Added data - Day: {day}, Handling: {handling}, Demurrage: {demurrage}")
+            # print(f"DEBUG: Added data - Day: {day}, Handling: {handling}, Demurrage: {demurrage}")
         except Exception as e:
-            print(f"DEBUG: Error processing item {item}: {str(e)}")
+            # print(f"DEBUG: Error processing item {item}: {str(e)}")
             continue
 
-    print(f"DEBUG: Chart data prepared - {len(labels)} days")
+    # print(f"DEBUG: Chart data prepared - {len(labels)} days")
     result = json.dumps({
         'labels': labels,
         'handling_data': handling_data,
@@ -192,15 +192,15 @@ def get_container_daily_summary():
             cursor.execute(query)
             columns = [col[0] for col in cursor.description]
             data = [dict(zip(columns, row)) for row in cursor.fetchall()]
-            print(f"DEBUG: Container data retrieved: {len(data)} records")
-            if data:
-                print(f"DEBUG: First record: {data[0]}")
-                print(f"DEBUG: Columns: {columns}")
+            # print(f"DEBUG: Container data retrieved: {len(data)} records")
+            # if data:
+            #     print(f"DEBUG: First record: {data[0]}")
+            #     print(f"DEBUG: Columns: {columns}")
             return data
     except Exception as e:
-        print(f"DEBUG: Error in get_container_daily_summary: {str(e)}")
-        import traceback
-        traceback.print_exc()
+        # print(f"DEBUG: Error in get_container_daily_summary: {str(e)}")
+        # import traceback
+        # traceback.print_exc()
         return []
 
 
@@ -212,13 +212,13 @@ def get_container_chart_data():
     cache_key = 'container_chart_data'
     cached_data = cache.get(cache_key)
     if cached_data:
-        print(f"DEBUG: Returning cached container chart data")
+        # print(f"DEBUG: Returning cached container chart data")
         return cached_data
 
     data = get_container_daily_summary()
 
     if not data:
-        print("DEBUG: No data returned from get_container_daily_summary()")
+        # print("DEBUG: No data returned from get_container_daily_summary()")
         return json.dumps({
             'labels': [],
             'recvd_data': [],
@@ -239,12 +239,12 @@ def get_container_chart_data():
             recvd_data.append(int(item['RECVD_QTY']) if item['RECVD_QTY'] else 0)
             shipped_data.append(int(item['SHIPPED_QTY']) if item['SHIPPED_QTY'] else 0)
 
-            print(f"DEBUG: Added data - Day: {day}, Recvd: {item['RECVD_QTY']}, Shipped: {item['SHIPPED_QTY']}")
+            # print(f"DEBUG: Added data - Day: {day}, Recvd: {item['RECVD_QTY']}, Shipped: {item['SHIPPED_QTY']}")
         except Exception as e:
-            print(f"DEBUG: Error processing item {item}: {str(e)}")
+            # print(f"DEBUG: Error processing item {item}: {str(e)}")
             continue
 
-    print(f"DEBUG: Chart data prepared - {len(labels)} days with labels: {labels}")
+    # print(f"DEBUG: Chart data prepared - {len(labels)} days with labels: {labels}")
     result = json.dumps({
         'labels': labels,
         'recvd_data': recvd_data,
@@ -282,7 +282,7 @@ def get_last_24hr_container_summary():
         balance = received_24hr - shipped_24hr
         last_day = str(last_entry['ACTION_DAY']).strip()
 
-        print(f"DEBUG: Last 24hr - Day: {last_day}, Received: {received_24hr}, Shipped: {shipped_24hr}, Balance: {balance}")
+        # print(f"DEBUG: Last 24hr - Day: {last_day}, Received: {received_24hr}, Shipped: {shipped_24hr}, Balance: {balance}")
 
         result = json.dumps({
             'received_24hr': received_24hr,
@@ -321,7 +321,7 @@ def get_last_24hr_hidem_summary():
         total_charges = handling_24hr + demurrage_24hr
         last_day = str(last_entry['TRAN_DAY']).strip()
 
-        print(f"DEBUG: Last 24hr H&D - Day: {last_day}, Handling: {handling_24hr}, Demurrage: {demurrage_24hr}, Total: {total_charges}")
+        # print(f"DEBUG: Last 24hr H&D - Day: {last_day}, Handling: {handling_24hr}, Demurrage: {demurrage_24hr}, Total: {total_charges}")
 
         result = json.dumps({
             'handling_24hr': round(handling_24hr, 2),
@@ -365,8 +365,8 @@ def get_month_to_date_summary():
     balance = total_received - total_shipped
     total_charges = total_handling + total_demurrage
 
-    print(f"DEBUG: MTD Summary - Received: {total_received}, Shipped: {total_shipped}, Balance: {balance}")
-    print(f"DEBUG: MTD H&D - Handling: {total_handling}, Demurrage: {total_demurrage}, Total: {total_charges}")
+    # print(f"DEBUG: MTD Summary - Received: {total_received}, Shipped: {total_shipped}, Balance: {balance}")
+    # print(f"DEBUG: MTD H&D - Handling: {total_handling}, Demurrage: {total_demurrage}, Total: {total_charges}")
 
     result = json.dumps({
         'mtd_received': total_received,
