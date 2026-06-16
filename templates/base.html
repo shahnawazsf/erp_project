@@ -13,12 +13,12 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        body { background-color: #f0f2f5; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background-color: #F0F9FF; font-family: 'Segoe UI', system-ui, sans-serif; }
 
         /* ── Sidebar ── */
         .sidebar {
             width: 260px; height: 100vh;
-            background: linear-gradient(180deg, #0f172a 0%, #1e3a5f 100%);
+            background: linear-gradient(180deg, #0C4A6E 0%, #075985 100%);
             position: fixed; top: 0; left: 0; z-index: 100;
             overflow-y: auto; overflow-x: hidden;
             display: flex; flex-direction: column;
@@ -36,7 +36,7 @@
         }
         .sidebar-logo .logo-icon {
             width: 36px; height: 36px; border-radius: 10px;
-            background: linear-gradient(135deg, #4fc3f7, #0288d1);
+            background: linear-gradient(135deg, #7DD3FC, #0284C7);
             display: inline-flex; align-items: center; justify-content: center;
             font-size: 1.1rem; color: #fff; margin-right: 0.6rem;
             flex-shrink: 0;
@@ -65,14 +65,14 @@
         }
         .sidebar .nav-link.active {
             color: #fff;
-            background: rgba(79,195,247,0.18);
+            background: rgba(125,211,252,0.2);
             font-weight: 600;
         }
         .sidebar .nav-link.active::before {
             content: '';
             position: absolute; left: 0; top: 20%; bottom: 20%;
             width: 3px; border-radius: 0 3px 3px 0;
-            background: #4fc3f7;
+            background: #7DD3FC;
         }
 
         /* ── Topbar ── */
@@ -102,8 +102,8 @@
             transition: all 0.2s;
         }
         .search-box:focus-within {
-            border-color: #4fc3f7;
-            box-shadow: 0 0 0 3px rgba(79, 195, 247, 0.1);
+            border-color: #0EA5E9;
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.12);
             background: #fff;
         }
         .search-box i { color: #adb5bd; font-size: 0.9rem; }
@@ -275,8 +275,8 @@
         }
         .pl-logo img { width: 52px; height: 52px; object-fit: contain; }
         @keyframes pl-pulse {
-            0%, 100% { transform: scale(1);   box-shadow: 0 0 0 0 rgba(79,195,247,0.3); }
-            50%       { transform: scale(1.05); box-shadow: 0 0 0 12px rgba(79,195,247,0); }
+            0%, 100% { transform: scale(1);   box-shadow: 0 0 0 0 rgba(14,165,233,0.3); }
+            50%       { transform: scale(1.05); box-shadow: 0 0 0 12px rgba(14,165,233,0); }
         }
 
         .pl-bar-wrap {
@@ -285,7 +285,7 @@
         }
         .pl-bar {
             height: 100%; width: 40%;
-            background: linear-gradient(90deg, #4fc3f7, #0288d1);
+            background: linear-gradient(90deg, #7DD3FC, #0EA5E9);
             border-radius: 99px;
             animation: pl-slide 1.2s ease-in-out infinite;
         }
