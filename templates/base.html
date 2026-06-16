@@ -4,350 +4,288 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}SDES Reporting Tool{% endblock %}</title>
+    <title>{% block title %}ERP System{% endblock %}</title>
+    <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="32x32" href="{% static 'image/favicon-32x32.png' %}">
     <link rel="icon" type="image/png" sizes="16x16" href="{% static 'image/favicon-16x16.png' %}">
     <link rel="shortcut icon" href="{% static 'image/favicon.ico' %}" type="image/x-icon">
-    <link rel="apple-touch-icon" href="{% static 'image/apple-touch-icon.png' %}">
+    <link rel="apple-touch-icon" href="{% static 'image/favicon.ico' %}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        /* ── Base ── */
-        *, *::before, *::after { box-sizing: border-box; }
-        body {
-            background: #F0FDF4;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            color: #1E293B;
-            font-size: 0.9rem;
-        }
+        body { background-color: #f0f2f5; font-family: 'Segoe UI', system-ui, sans-serif; }
 
         /* ── Sidebar ── */
         .sidebar {
-            width: 255px;
-            height: 100vh;
-            background: #FFFFFF;
-            border-right: 1px solid #E2E8F0;
-            position: fixed;
-            top: 0; left: 0;
-            z-index: 100;
-            overflow-y: auto;
-            overflow-x: hidden;
-            display: flex;
-            flex-direction: column;
+            width: 260px; height: 100vh;
+            background: linear-gradient(180deg, #0f172a 0%, #1e3a5f 100%);
+            position: fixed; top: 0; left: 0; z-index: 100;
+            overflow-y: auto; overflow-x: hidden;
+            display: flex; flex-direction: column;
         }
-        .sidebar::-webkit-scrollbar { width: 4px; }
+        .sidebar::-webkit-scrollbar { width: 3px; }
         .sidebar::-webkit-scrollbar-track { background: transparent; }
-        .sidebar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 99px; }
-        .sidebar::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+        .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 4px; }
+        .sidebar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
 
-        /* Logo area */
+        /* Logo */
         .sidebar-logo {
-            padding: 1.2rem 1.1rem 1.1rem;
-            border-bottom: 1px solid #DCFCE7;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            gap: 0.65rem;
-        }
-        .sidebar-logo img {
-            height: 38px;
-            width: auto;
-            object-fit: contain;
+            padding: 1.4rem 1.25rem 1.2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
             flex-shrink: 0;
         }
-        .sidebar-logo .logo-text {
-            color: #0F172A;
-            font-weight: 700;
-            font-size: 0.95rem;
-            line-height: 1.2;
-            letter-spacing: -0.2px;
+        .sidebar-logo .logo-icon {
+            width: 36px; height: 36px; border-radius: 10px;
+            background: linear-gradient(135deg, #4fc3f7, #0288d1);
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; color: #fff; margin-right: 0.6rem;
+            flex-shrink: 0;
         }
-        .sidebar-logo .logo-sub {
-            color: #94A3B8;
-            font-size: 0.67rem;
-            margin-top: 1px;
-        }
+        .sidebar-logo .logo-text { color: #fff; font-weight: 700; font-size: 1rem; line-height: 1.2; }
+        .sidebar-logo .logo-sub { color: rgba(255,255,255,0.4); font-size: 0.7rem; }
 
         /* Nav */
-        .sidebar-nav { padding: 0.65rem 0 1rem; flex: 1; }
+        .sidebar-nav { padding: 0.75rem 0; flex: 1; }
         .nav-section {
-            color: #94A3B8;
-            font-size: 0.62rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1.4px;
-            padding: 1.1rem 1.1rem 0.3rem;
+            color: rgba(255,255,255,0.3); font-size: 0.65rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1.2px;
+            padding: 1rem 1.25rem 0.35rem;
         }
         .sidebar .nav-link {
-            color: #475569;
-            padding: 0.5rem 0.8rem;
-            border-radius: 8px;
-            margin: 1px 8px;
-            font-size: 0.845rem;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            transition: background 0.13s, color 0.13s;
-            text-decoration: none;
+            color: rgba(255,255,255,0.62);
+            padding: 0.55rem 1rem 0.55rem 1.1rem;
+            border-radius: 9px; margin: 1px 10px;
+            font-size: 0.855rem; font-weight: 500;
+            display: flex; align-items: center; gap: 0.55rem;
+            transition: all 0.18s; position: relative;
         }
-        .sidebar .nav-link i {
-            font-size: 1rem;
-            flex-shrink: 0;
-            opacity: 0.9;
-        }
+        .sidebar .nav-link i { font-size: 1rem; opacity: 0.85; flex-shrink: 0; }
         .sidebar .nav-link:hover {
-            color: #16A34A;
-            background: #DCFCE7;
+            color: #fff; background: rgba(255,255,255,0.09);
         }
         .sidebar .nav-link.active {
-            color: #15803D;
-            background: #DCFCE7;
+            color: #fff;
+            background: rgba(79,195,247,0.18);
             font-weight: 600;
         }
-        .sidebar .nav-link.active i { opacity: 1; }
-
-        /* Sidebar bottom user strip */
-        .sidebar-user {
-            border-top: 1px solid #DCFCE7;
-            padding: 0.85rem 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.65rem;
-            flex-shrink: 0;
+        .sidebar .nav-link.active::before {
+            content: '';
+            position: absolute; left: 0; top: 20%; bottom: 20%;
+            width: 3px; border-radius: 0 3px 3px 0;
+            background: #4fc3f7;
         }
-        .sidebar-user-avatar {
-            width: 32px; height: 32px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #22C55E, #16A34A);
-            color: #fff;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: 700; font-size: 0.8rem;
-            flex-shrink: 0;
-        }
-        .sidebar-user-name { color: #1E293B; font-size: 0.8rem; font-weight: 600; line-height: 1.2; }
-        .sidebar-user-role { color: #94A3B8; font-size: 0.68rem; margin-top: 1px; }
 
         /* ── Topbar ── */
-        .main-content {
-            margin-left: 255px;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
+        .main-content { margin-left: 260px; min-height: 100vh; }
         .topbar {
-            background: #FFFFFF;
-            border-bottom: 1px solid #E2E8F0;
-            padding: 0 1.5rem;
-            height: 56px;
-            position: sticky;
-            top: 0;
-            z-index: 99;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1rem;
+            background: #fff; border-bottom: 1px solid #e9ecef;
+            padding: 0 1.5rem; height: 58px;
+            position: sticky; top: 0; z-index: 99;
+            display: flex; align-items: center; justify-content: space-between;
         }
-        .topbar-left { display: flex; align-items: center; gap: 0.75rem; flex: 1; }
-        .topbar-right { display: flex; align-items: center; gap: 0.25rem; flex-shrink: 0; }
+        .topbar-left { display: flex; align-items: center; gap: 1rem; }
+        .topbar-right { display: flex; align-items: center; gap: 0.5rem; }
 
-        /* Page title area */
-        .topbar-title {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #1E293B;
-            white-space: nowrap;
+        /* ── Global Search Bar ── */
+        .search-container {
+            position: relative;
+            width: 320px;
         }
-
-        /* ── Search ── */
-        .search-container { position: relative; width: 280px; }
         .search-box {
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            padding: 0.45rem 0.75rem;
-            background: #F8FAFC;
-            border: 1.5px solid #E2E8F0;
+            padding: 0.5rem 0.75rem;
+            background: #f8f9fa;
+            border: 1.5px solid #e9ecef;
             border-radius: 8px;
-            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+            transition: all 0.2s;
         }
         .search-box:focus-within {
-            border-color: #16A34A;
-            box-shadow: 0 0 0 3px rgba(22,163,74,0.12);
+            border-color: #4fc3f7;
+            box-shadow: 0 0 0 3px rgba(79, 195, 247, 0.1);
             background: #fff;
         }
-        .search-box i { color: #94A3B8; font-size: 0.875rem; flex-shrink: 0; }
+        .search-box i { color: #adb5bd; font-size: 0.9rem; }
         .search-box input {
             flex: 1;
             border: none;
             background: transparent;
             outline: none;
-            font-size: 0.83rem;
-            color: #1E293B;
+            font-size: 0.85rem;
+            color: #1a2035;
         }
-        .search-box input::placeholder { color: #94A3B8; }
+        .search-box input::placeholder { color: #adb5bd; }
         .search-results {
             position: absolute;
-            top: calc(100% + 4px);
-            left: 0; right: 0;
+            top: 100%;
+            left: 0;
+            right: 0;
             background: #fff;
-            border: 1.5px solid #E2E8F0;
-            border-radius: 10px;
-            max-height: 300px;
+            border: 1.5px solid #e9ecef;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 320px;
             overflow-y: auto;
             z-index: 1000;
             display: none;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.09);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
         }
         .search-results.show { display: block; }
         .search-result-item {
-            padding: 0.65rem 1rem;
-            border-bottom: 1px solid #F8FAFC;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #f0f2f5;
             cursor: pointer;
-            transition: background 0.12s;
-            font-size: 0.85rem;
-            text-decoration: none;
-            display: block;
-            color: inherit;
+            transition: background 0.15s;
+            font-size: 0.875rem;
         }
         .search-result-item:last-child { border-bottom: none; }
-        .search-result-item:hover { background: #F8FAFC; }
-        .search-result-item .result-title { color: #1E293B; font-weight: 500; }
-        .search-result-item .result-meta { color: #94A3B8; font-size: 0.75rem; margin-top: 2px; }
+        .search-result-item:hover { background: #f8f9fa; }
+        .search-result-item .result-title { color: #1a2035; font-weight: 500; }
+        .search-result-item .result-meta { color: #8a97a8; font-size: 0.75rem; margin-top: 0.25rem; }
 
-        /* ── Topbar icon buttons ── */
-        .topbar-icon-btn {
-            width: 34px; height: 34px;
-            border: none;
-            background: transparent;
-            border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-            color: #64748B;
-            cursor: pointer;
-            transition: background 0.13s, color 0.13s;
-            font-size: 1rem;
-            text-decoration: none;
+        /* ── Settings Dropdown ── */
+        .settings-dropdown {
+            position: relative;
         }
-        .topbar-icon-btn:hover { background: #DCFCE7; color: #1E293B; }
-        .topbar-icon-btn.logout:hover { background: #FEF2F2; color: #DC2626; }
-        .topbar-divider { width: 1px; height: 18px; background: #E2E8F0; margin: 0 0.2rem; }
-
-        /* ── Settings dropdown ── */
-        .settings-dropdown { position: relative; }
         .settings-menu {
             position: absolute;
-            top: calc(100% + 6px);
+            top: 100%;
             right: 0;
             background: #fff;
-            border: 1.5px solid #E2E8F0;
-            border-radius: 10px;
-            min-width: 210px;
+            border: 1.5px solid #e9ecef;
+            border-radius: 8px;
+            min-width: 220px;
             z-index: 1000;
             display: none;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.09);
-            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            margin-top: 0.5rem;
         }
         .settings-menu.show { display: block; }
         .settings-menu-item {
-            padding: 0.65rem 1rem;
-            border-bottom: 1px solid #F8FAFC;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #f0f2f5;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 0.6rem;
-            color: #334155;
-            font-size: 0.85rem;
-            transition: background 0.12s;
+            gap: 0.5rem;
+            color: #1a2035;
+            font-size: 0.875rem;
+            transition: background 0.15s;
             text-decoration: none;
             text-align: left;
             width: 100%;
-            border-left: none;
-            border-right: none;
-            border-top: none;
+            border: none;
             background: transparent;
         }
         .settings-menu-item:last-child { border-bottom: none; }
-        .settings-menu-item:hover { background: #F8FAFC; }
-        .settings-menu-item i { font-size: 0.95rem; color: #64748B; flex-shrink: 0; }
-        .settings-menu-divider { height: 1px; background: #F1F5F9; }
-
-        /* ── Content area ── */
-        .content-area { flex: 1; padding: 1.5rem; }
-        .card {
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-            background: #fff;
+        .settings-menu-item:hover { background: #f8f9fa; }
+        .settings-menu-item i { font-size: 1rem; color: #6c757d; }
+        .settings-menu-divider {
+            height: 1px;
+            background: #f0f2f5;
+            margin: 0.5rem 0;
         }
-        .page-header { margin-bottom: 1.5rem; }
-        .page-header h4 { font-weight: 700; color: #0F172A; font-size: 1.15rem; }
-        .table th {
-            font-weight: 600;
-            font-size: 0.78rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #64748B;
-            border-top: none;
-            background: #F8FAFC;
-        }
-        .btn-sm { border-radius: 6px; }
-        .badge-status { font-size: 0.75rem; padding: 0.3em 0.65em; border-radius: 50px; }
-        .stat-card { border-radius: 12px; color: #fff; padding: 1.25rem; }
 
         /* ── Footer ── */
         .main-footer {
-            border-top: 1px solid #E2E8F0;
-            background: #FFFFFF;
-            padding: 1rem 1.5rem;
+            border-top: 1px solid #e9ecef;
+            background: #fff;
+            padding: 2rem 1.5rem;
+            margin-top: auto;
+        }
+        .footer-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+        }
+        .footer-column h5 {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #1a2035;
+            margin-bottom: 0.75rem;
+        }
+        .footer-column ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .footer-column li {
+            margin-bottom: 0.5rem;
+        }
+        .footer-column a {
+            color: #6c757d;
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: color 0.15s;
+        }
+        .footer-column a:hover { color: #4fc3f7; }
+        .footer-column p {
+            color: #6c757d;
+            font-size: 0.875rem;
+            margin: 0.25rem 0;
         }
         .footer-copyright {
             text-align: center;
-            color: #CBD5E1;
-            font-size: 0.78rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #f0f2f5;
+            margin-top: 1.5rem;
+            color: #adb5bd;
+            font-size: 0.8rem;
         }
+
+        /* ── Adjust main-content to include footer ── */
+        .main-content { display: flex; flex-direction: column; min-height: 100vh; position: relative; }
+        .content-area { flex: 1; padding: 1.5rem; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.07); }
+        .stat-card { border-radius: 12px; color: #fff; padding: 1.25rem; }
+        .stat-card .stat-icon { font-size: 2.5rem; opacity: 0.8; }
+        .badge-status { font-size: 0.75rem; padding: 0.35em 0.65em; border-radius: 50px; }
+        .table th {
+            font-weight: 600; font-size: 0.8rem; text-transform: uppercase;
+            letter-spacing: 0.5px; color: #6c757d; border-top: none;
+        }
+        .btn-sm { border-radius: 6px; }
+        .page-header { margin-bottom: 1.5rem; }
+        .page-header h4 { font-weight: 700; color: #1a2035; }
 
         /* ── Page loader ── */
         #pageLoader {
             position: absolute;
-            top: 56px; left: 0; right: 0; bottom: 0;
+            top: 58px;
+            left: 0;
+            right: 0;
+            bottom: 0;
             z-index: 10000;
-            background: rgba(240, 253, 244, 0.88);
-            backdrop-filter: blur(3px);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
+            background: rgba(15, 23, 42, 0.8);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            transition: opacity 0.35s ease, visibility 0.35s ease;
             opacity: 1;
             visibility: visible;
         }
         #pageLoader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
 
         .pl-logo {
-            width: 64px; height: 64px;
-            border-radius: 16px;
-            background: #fff;
-            box-shadow: 0 4px 16px rgba(22,163,74,0.12);
+            width: 72px; height: 72px; border-radius: 20px;
+            background: rgba(255,255,255,0.06);
             display: flex; align-items: center; justify-content: center;
-            margin-bottom: 1.25rem;
+            margin-bottom: 1.5rem;
             animation: pl-pulse 1.8s ease-in-out infinite;
         }
-        .pl-logo img { width: 44px; height: 44px; object-fit: contain; }
+        .pl-logo img { width: 52px; height: 52px; object-fit: contain; }
         @keyframes pl-pulse {
-            0%, 100% { transform: scale(1); box-shadow: 0 4px 16px rgba(22,163,74,0.12); }
-            50%       { transform: scale(1.04); box-shadow: 0 8px 24px rgba(22,163,74,0.2); }
+            0%, 100% { transform: scale(1);   box-shadow: 0 0 0 0 rgba(79,195,247,0.3); }
+            50%       { transform: scale(1.05); box-shadow: 0 0 0 12px rgba(79,195,247,0); }
         }
+
         .pl-bar-wrap {
-            width: 160px; height: 3px;
-            background: #E2E8F0;
-            border-radius: 99px;
-            overflow: hidden;
-            margin-bottom: 0.85rem;
+            width: 180px; height: 3px; background: rgba(255,255,255,0.08);
+            border-radius: 99px; overflow: hidden; margin-bottom: 1rem;
         }
         .pl-bar {
             height: 100%; width: 40%;
-            background: linear-gradient(90deg, #4ADE80, #16A34A);
+            background: linear-gradient(90deg, #4fc3f7, #0288d1);
             border-radius: 99px;
             animation: pl-slide 1.2s ease-in-out infinite;
         }
@@ -355,7 +293,10 @@
             0%   { transform: translateX(-100%); }
             100% { transform: translateX(350%); }
         }
-        .pl-text { color: #94A3B8; font-size: 0.73rem; letter-spacing: 1.5px; text-transform: uppercase; }
+        .pl-text {
+            color: rgba(255,255,255,0.35); font-size: 0.75rem;
+            letter-spacing: 1.5px; text-transform: uppercase;
+        }
         @media print { #pageLoader { display: none !important; } }
     </style>
     {% block extra_css %}{% endblock %}
@@ -365,11 +306,12 @@
 
 <!-- ── Sidebar ── -->
 <div class="sidebar">
-    <div class="sidebar-logo">
-        <img src="{% static 'image/logo1.png' %}" alt="SDES Logo">
+    <div class="sidebar-logo d-flex align-items-center gap-2">
+        <img src="{% static 'image/logo1.png' %}" alt="Logo"
+             style="height:42px; width:auto; object-fit:contain; flex-shrink:0;">
         <div>
             <div class="logo-text">SDES ERP</div>
-            <div class="logo-sub">Reporting Tool</div>
+            <div class="logo-sub">Enterprise Resource Planning</div>
         </div>
     </div>
 
@@ -403,21 +345,8 @@
         <div class="nav-section">Operations</div>
         <a href="{% url 'operations:dashboard' %}"
            class="nav-link {% if request.resolver_match.app_name == 'operations' %}active{% endif %}">
-            <i class="bi bi-bar-chart-steps"></i> Operations Dashboard
+            <i class="bi bi-tools"></i> Operations Dashboard
         </a>
-    </div>
-
-    <!-- Bottom user strip -->
-    <div class="sidebar-user">
-        <div class="sidebar-user-avatar">
-            {{ user.get_full_name|slice:":1"|upper|default:user.username|slice:":1"|upper }}
-        </div>
-        <div style="min-width:0;">
-            <div class="sidebar-user-name text-truncate">{{ user.get_full_name|default:user.username }}</div>
-            <div class="sidebar-user-role">
-                {% if user.user_grp_id %}{{ user.user_grp_id }}{% else %}User{% endif %}
-            </div>
-        </div>
     </div>
 </div>
 
@@ -427,28 +356,39 @@
     <!-- Topbar -->
     <div class="topbar">
         <div class="topbar-left">
-            <!-- Global Search -->
+            <!-- Global Search Bar -->
             <div class="search-container">
                 <div class="search-box">
                     <i class="bi bi-search"></i>
-                    <input type="text" id="globalSearch" placeholder="Search reports, pages...">
+                    <input type="text" id="globalSearch" placeholder="Search reports, invoices...">
                 </div>
                 <div class="search-results" id="searchResults"></div>
+            </div>
+
+            <!-- User info -->
+            <div class="user-avatar">
+                {{ user.get_full_name|slice:":1"|upper|default:user.username|slice:":1"|upper }}
+            </div>
+            <div>
+                <div class="fw-semibold lh-1" style="font-size:0.875rem; color:#1a2035;">
+                    {{ user.get_full_name|default:user.username }}
+                </div>
+                <div class="lh-1 mt-1" style="font-size:0.72rem; color:#8a97a8;">
+                    {% if user.user_emp_code %}
+                        <span class="me-2"><i class="bi bi-person-badge me-1"></i>{{ user.user_emp_code }}</span>
+                    {% endif %}
+                    {% if user.user_grp_id %}
+                        <span class="badge rounded-pill"
+                              style="background:rgba(26,46,82,0.1); color:#1a2e52; font-size:0.65rem; padding:0.2em 0.55em;">
+                            {{ user.user_grp_id }}
+                        </span>
+                    {% endif %}
+                </div>
             </div>
         </div>
 
         <div class="topbar-right">
-            <!-- Emp code badge -->
-            {% if user.user_emp_code %}
-            <span class="badge rounded-pill"
-                  style="background:#DCFCE7; color:#15803D; font-size:0.7rem; font-weight:600; padding:0.3em 0.75em; border:1px solid #BBF7D0;">
-                <i class="bi bi-person-badge me-1"></i>{{ user.user_emp_code }}
-            </span>
-            {% endif %}
-
-            <div class="topbar-divider"></div>
-
-            <!-- Settings dropdown -->
+            <!-- Settings Dropdown -->
             <div class="settings-dropdown">
                 <button class="topbar-icon-btn" id="settingsBtn" title="Settings">
                     <i class="bi bi-gear"></i>
@@ -459,7 +399,7 @@
                         <span>Date Format: DD/MM/YYYY</span>
                     </div>
                     <div class="settings-menu-item" data-setting="theme">
-                        <i class="bi bi-sun"></i>
+                        <i class="bi bi-moon"></i>
                         <span>Light Mode</span>
                     </div>
                     <div class="settings-menu-item" data-setting="timezone">
@@ -467,14 +407,14 @@
                         <span>Timezone: UTC</span>
                     </div>
                     <div class="settings-menu-divider"></div>
-                    <a href="#" class="settings-menu-item" onclick="alert('Documentation coming soon'); return false;">
+                    <a href="#" class="settings-menu-item" onclick="alert('Documentation coming soon')">
                         <i class="bi bi-question-circle"></i>
                         <span>Help & Documentation</span>
                     </a>
                 </div>
             </div>
 
-            <!-- Logout -->
+            <div class="topbar-divider"></div>
             <a href="{% url 'logout' %}" class="topbar-icon-btn logout" title="Sign out">
                 <i class="bi bi-box-arrow-right"></i>
             </a>
@@ -497,14 +437,14 @@
         {% block content %}{% endblock %}
     </div>
 
-    <!-- Footer -->
+    <!-- ── Footer with Copyright ── -->
     <footer class="main-footer">
         <div class="footer-copyright">
             &copy; {% now "Y" %} SDES Reporting Tool. All rights reserved.
         </div>
     </footer>
 
-    <!-- Page loader -->
+    <!-- ── Page loader (inside main-content) ── -->
     <div id="pageLoader" class="hidden">
         <div class="pl-logo">
             <img src="{% static 'image/logo1.png' %}" alt="Loading…">
@@ -518,7 +458,7 @@
 {% block auth_content %}{% endblock %}
 {% endif %}
 
-<!-- Session timeout modal -->
+<!-- Session timeout warning modal -->
 {% if user.is_authenticated %}
 <div class="modal fade" id="sessionModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered modal-sm">
@@ -527,15 +467,15 @@
                 <div style="font-size:2.5rem; margin-bottom:0.75rem;">&#9201;</div>
                 <h6 class="fw-bold mb-1">Session Expiring</h6>
                 <p class="text-muted small mb-3">You will be logged out in <strong id="sessionCountdown">60</strong> seconds due to inactivity.</p>
-                <button class="btn btn-success btn-sm w-100" id="sessionStayBtn">Stay Logged In</button>
+                <button class="btn btn-primary btn-sm w-100" id="sessionStayBtn">Stay Logged In</button>
             </div>
         </div>
     </div>
 </div>
 <script>
 (function () {
-    var TIMEOUT  = 1200;
-    var WARN_AT  = 1140;
+    var TIMEOUT    = 1200;   /* 20 min total */
+    var WARN_AT    = 1140;   /* show warning at 19 min */
     var lastActive = Date.now();
     var modal, bsModal;
 
@@ -550,13 +490,17 @@
         document.getElementById('sessionStayBtn').addEventListener('click', function () {
             resetTimer();
             bsModal.hide();
+            /* Ping server to reset server-side session */
             fetch(window.location.href, { method: 'HEAD', credentials: 'same-origin' });
         });
     });
 
     setInterval(function () {
         var idle = Math.floor((Date.now() - lastActive) / 1000);
-        if (idle >= TIMEOUT) { window.location.href = '{% url "logout" %}'; return; }
+        if (idle >= TIMEOUT) {
+            window.location.href = '{% url "logout" %}';
+            return;
+        }
         if (idle >= WARN_AT && bsModal) {
             var cd = document.getElementById('sessionCountdown');
             if (cd) cd.textContent = TIMEOUT - idle;
@@ -571,9 +515,9 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-/* Global Search */
+/* Global Search Bar */
 (function () {
-    var searchInput   = document.getElementById('globalSearch');
+    var searchInput = document.getElementById('globalSearch');
     var searchResults = document.getElementById('searchResults');
     var debounceTimer;
 
@@ -582,89 +526,115 @@
     searchInput.addEventListener('input', function () {
         clearTimeout(debounceTimer);
         var query = this.value.trim();
-        if (!query) { searchResults.classList.remove('show'); return; }
-        debounceTimer = setTimeout(function () { performSearch(query); }, 300);
+
+        if (!query) {
+            searchResults.classList.remove('show');
+            return;
+        }
+
+        debounceTimer = setTimeout(function () {
+            performSearch(query);
+        }, 300);
     });
 
     function performSearch(query) {
-        var items = [
+        var mockResults = [
             { title: 'Customer Invoice Report', meta: 'Finance Reports', url: '{% url "report_customer_invoice" %}' },
-            { title: 'VAT Report',              meta: 'Finance Reports', url: '{% url "report_vat" %}' },
-            { title: 'Dashboard',               meta: 'Main',            url: '{% url "dashboard" %}' },
-            { title: 'Report Center',           meta: 'Finance Reports', url: '{% url "finance_reports" %}' },
-            { title: 'Operations Dashboard',    meta: 'Operations',      url: '{% url "operations:dashboard" %}' },
-            { title: 'Work Orders',             meta: 'Operations',      url: '{% url "operations:work_orders_list" %}' },
-            { title: 'Maintenance',             meta: 'Operations',      url: '{% url "operations:maintenance_list" %}' }
+            { title: 'VAT Report', meta: 'Finance Reports', url: '{% url "report_vat" %}' },
+            { title: 'Dashboard', meta: 'Main', url: '{% url "dashboard" %}' },
+            { title: 'Report Center', meta: 'Finance Reports', url: '{% url "finance_reports" %}' },
+            { title: 'Operations Dashboard', meta: 'Operations', url: '{% url "operations:dashboard" %}' },
+            { title: 'Work Orders', meta: 'Operations', url: '{% url "operations:work_orders_list" %}' },
+            { title: 'Maintenance', meta: 'Operations', url: '{% url "operations:maintenance_list" %}' }
         ];
-        var q = query.toLowerCase();
-        var filtered = items.filter(function (i) {
-            return i.title.toLowerCase().includes(q) || i.meta.toLowerCase().includes(q);
+
+        var filtered = mockResults.filter(function (item) {
+            return item.title.toLowerCase().includes(query.toLowerCase()) ||
+                   item.meta.toLowerCase().includes(query.toLowerCase());
         });
-        searchResults.innerHTML = filtered.length
-            ? filtered.map(function (i) {
-                return '<a href="' + i.url + '" class="search-result-item">'
-                     + '<div class="result-title">' + i.title + '</div>'
-                     + '<div class="result-meta">' + i.meta + '</div>'
-                     + '</a>';
-              }).join('')
-            : '<div class="search-result-item" style="text-align:center;color:#94A3B8;">No results found</div>';
+
+        if (filtered.length === 0) {
+            searchResults.innerHTML = '<div class="search-result-item" style="text-align:center;color:#adb5bd;">No results found</div>';
+        } else {
+            searchResults.innerHTML = filtered.map(function (item) {
+                return '<a href="' + item.url + '" class="search-result-item">' +
+                       '<div class="result-title">' + item.title + '</div>' +
+                       '<div class="result-meta">' + item.meta + '</div>' +
+                       '</a>';
+            }).join('');
+        }
+
         searchResults.classList.add('show');
     }
 
     document.addEventListener('click', function (e) {
-        if (!e.target.closest('.search-container')) searchResults.classList.remove('show');
+        if (!e.target.closest('.search-container')) {
+            searchResults.classList.remove('show');
+        }
     });
 })();
 
-/* Settings dropdown */
+/* Settings Dropdown */
 (function () {
-    var btn  = document.getElementById('settingsBtn');
-    var menu = document.getElementById('settingsMenu');
-    if (!btn) return;
+    var settingsBtn = document.getElementById('settingsBtn');
+    var settingsMenu = document.getElementById('settingsMenu');
 
-    btn.addEventListener('click', function (e) {
+    if (!settingsBtn) return;
+
+    settingsBtn.addEventListener('click', function (e) {
         e.stopPropagation();
-        menu.classList.toggle('show');
-    });
-    document.addEventListener('click', function (e) {
-        if (!e.target.closest('.settings-dropdown')) menu.classList.remove('show');
+        settingsMenu.classList.toggle('show');
     });
 
-    document.querySelectorAll('[data-setting]').forEach(function (item) {
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.settings-dropdown')) {
+            settingsMenu.classList.remove('show');
+        }
+    });
+
+    var settingsItems = document.querySelectorAll('[data-setting]');
+    settingsItems.forEach(function (item) {
         item.addEventListener('click', function () {
             var setting = this.getAttribute('data-setting');
             // console.log('Setting clicked:', setting);
-            /* Future: settings persistence */
+            /* Future: Add actual settings functionality */
         });
     });
 })();
 </script>
 <script>
-/* Page loader */
 (function () {
     var loader = document.getElementById('pageLoader');
-    function hide() { if (loader) loader.classList.add('hidden'); }
-
-    if (document.readyState === 'complete') { hide(); }
-    else {
-        window.addEventListener('load', hide);
-        setTimeout(hide, 4000);
+    function hideLoader() {
+        if (loader) loader.classList.add('hidden');
+    }
+    /* Hide once DOM + resources are ready */
+    if (document.readyState === 'complete') {
+        hideLoader();
+    } else {
+        window.addEventListener('load', hideLoader);
+        /* Safety net — hide after 4 s even if load stalls */
+        setTimeout(hideLoader, 4000);
     }
 
+    /* Show loader on every navigation away from the page */
     document.addEventListener('click', function (e) {
         var a = e.target.closest('a[href]');
         if (!a) return;
         var href = a.getAttribute('href');
+        /* Skip: external links, anchors, JS actions, download links */
         if (!href || href.startsWith('#') || href.startsWith('javascript')
             || a.target === '_blank' || a.hasAttribute('download')) return;
         if (loader) loader.classList.remove('hidden');
     });
 
-    document.addEventListener('submit', function () {
+    /* Show on form submit */
+    document.addEventListener('submit', function (e) {
         if (loader) loader.classList.remove('hidden');
     });
 
-    window.addEventListener('pageshow', function () {
+    /* Re-hide on browser back/forward */
+    window.addEventListener('pageshow', function (e) {
         if (loader) loader.classList.add('hidden');
     });
 })();
