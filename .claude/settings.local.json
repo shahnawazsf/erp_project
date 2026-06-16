@@ -34,7 +34,10 @@
       "Bash(python *)",
       "Bash(pkill -f \"python manage.py runserver\")",
       "Bash(git remote *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(Get-ChildItem node_modules -ErrorAction SilentlyContinue)",
+      "Bash(Measure-Object)",
+      "Bash(Select-Object -ExpandProperty Count)"
     ]
   }
 }
