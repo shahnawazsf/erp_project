@@ -6,6 +6,28 @@
     <h4 class="mb-4">Operations Dashboard</h4>
     <h5 class="text-center text-secondary mb-4">Daily Activity Report {% now "d F Y" %}</h5>
 
+    <!-- Dashboard Tabs -->
+    <ul class="nav nav-tabs mb-4" id="opsDashboardTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="tab-overview-btn" data-bs-toggle="tab" data-bs-target="#tab-overview"
+                    type="button" role="tab" aria-controls="tab-overview" aria-selected="true">
+                Operations Activity
+            </button>
+        </li>
+        {% comment %} Maintenance Activity tab — hidden
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-new-btn" data-bs-toggle="tab" data-bs-target="#tab-new"
+                    type="button" role="tab" aria-controls="tab-new" aria-selected="false">
+                Maintenance Activity
+            </button>
+        </li>
+        {% endcomment %}
+    </ul>
+
+    <div class="tab-content" id="opsDashboardTabsContent">
+    <!-- ========== TAB 1: Overview ========== -->
+    <div class="tab-pane fade show active" id="tab-overview" role="tabpanel" aria-labelledby="tab-overview-btn">
+
     <!-- Summary Cards Row -->
     <div class="row mb-4">
         <!-- Card: Last 24 Hours Container Summary -->
@@ -88,6 +110,59 @@
     </div>
 
     <!-- Future Cards will be added here -->
+
+    </div><!-- /#tab-overview -->
+
+    <!-- ========== TAB 2: Maintenance Activity ========== -->
+    {% comment %} Maintenance Activity tab pane — hidden
+    <div class="tab-pane fade" id="tab-new" role="tabpanel" aria-labelledby="tab-new-btn">
+
+        <!-- Summary Card: Maintenance Tickets
+             TODO: Replace static 0s by populating #maintenanceSummary from JS.
+                   1. Add a query function in operations/views.py (see TODO marker there)
+                      and pass JSON as context key e.g. `maintenance_summary`.
+                   2. In the <script> block at the bottom of this file,
+                      find the "MAINTENANCE SUMMARY" section and render the values
+                      into #maintenanceSummary the same way container24hrSummary is built.
+        -->
+        <div class="row mb-4">
+            <div class="col-md-12 mb-3">
+                <div class="card bg-gradient border-0 shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="mb-0">🛠️ Maintenance Tickets Summary</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="maintenanceSummary">
+                            <div class="row g-2">
+                                <div class="col-md-4 col-12">
+                                    <div class="text-center p-3 bg-light rounded">
+                                        <h6 class="text-muted mb-1">Open Tickets</h6>
+                                        <h4 class="text-warning mb-0" id="maintOpenCount">0</h4>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 col-12">
+                                    <div class="text-center p-3 bg-light rounded">
+                                        <h6 class="text-muted mb-1">Close Tickets</h6>
+                                        <h4 class="text-success mb-0" id="maintCloseCount">0</h4>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 col-12">
+                                    <div class="text-center p-3 bg-light rounded">
+                                        <h6 class="text-muted mb-1">Under Process</h6>
+                                        <h4 class="text-info mb-0" id="maintProcessCount">0</h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /#tab-new -->
+    {% endcomment %}
+
+    </div><!-- /.tab-content -->
 
 </div>
 
@@ -220,6 +295,23 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ==========================================
+    // MAINTENANCE SUMMARY (Tab 2)
+    // ==========================================
+    const maintJson = '{{ maintenance_summary|default:""|safe }}';
+    if (maintJson) {
+        const maintData = JSON.parse(maintJson);
+        const maintOpenCount = document.getElementById('maintOpenCount');
+        const maintCloseCount = document.getElementById('maintCloseCount');
+        const maintProcessCount = document.getElementById('maintProcessCount');
+
+        if (maintOpenCount && maintCloseCount && maintProcessCount) {
+            maintOpenCount.textContent = maintData.open_count ?? 0;
+            maintCloseCount.textContent = maintData.close_count ?? 0;
+            maintProcessCount.textContent = maintData.process_count ?? 0;
+        }
+    }
+
+    // ==========================================
     // CHART 1: Dynamic Line Chart
     // ==========================================
     const lineChartDataJson = '{{ container_chart_data|safe }}';
@@ -289,7 +381,7 @@ document.addEventListener('DOMContentLoaded', function() {
             xaxis: {
                 categories: lineChartData.labels,
                 title: {
-                    text: 'Day of Month',
+                    text: 'Day of Month {% now "F" %}',
                     style: {
                         fontSize: '12px',
                         fontWeight: 'bold',
@@ -586,7 +678,7 @@ document.addEventListener('DOMContentLoaded', function() {
             xaxis: {
                 categories: hiDemChartData.labels,
                 title: {
-                    text: 'Day of Month',
+                    text: 'Day of Month {% now "F" %}',
                     style: {
                         fontSize: '12px',
                         fontWeight: 'bold',
